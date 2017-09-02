@@ -1,0 +1,38 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Transcode flac files to mp3.
+
+    `echoGreen Usage:` $PROGNAME `echoBlue "[files...]"` `echoViolet "[-o output]"`
+
+        `echoBlue files...` : Files to transcode
+
+        `echoViolet -o` : Output directory (default: Transcoded)
+EOF
+}
+
+function declareConstants() {
+	return 0
+}
+
+function loadOptions() {
+	getOpt "-o" out 1 "Transcoded"
+	return 0
+}
+
+function run() {
+	test -d "$out" || mkdir "$out" || error "Cannot create dir: $out"
+
+	for file in "$@"; do
+		if [[ "$file" == *".flac" ]]; then
+			ffmpeg -i "$file" -qscale:a 0 "$out/${file[@]/%flac/mp3}"
+			# avconv -i "$a" -qscale:a 0 "$out/${a[@]/%flac/mp3}"
+		else
+			print "Ignored file: $a"
+		fi
+	done
+}
+
+source "$SCRIPT_LIB/scriptStarter"
