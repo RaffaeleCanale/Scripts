@@ -3,16 +3,16 @@
 function printHelp() {
     cat << EOF
 
-    Usage: ${PROGNAME} <properties> `echoViolet "-r"`
-
-    All of the keys found in the input will replaced with the corresponding value found in the
+    Replaces all of the keys found in the input with the corresponding value found in the
     properties file.
 
-    The properties file should contain list of key-value pairs.
+    `echoGreen Usage:` ${PROGNAME} `echoBlue [properties]` `echoViolet "-r"`
+
+        `echoBlue properties`: The properties file should contain list of key-value pairs
 
         `echoViolet "-r"`: Reverse the keys and values
 
-    Example usage; cat template.txt | applyProperties replacements.properties > compiled.txt
+    Example usage: cat template.txt | applyProperties replacements.properties > compiled.txt
 EOF
 }
 
