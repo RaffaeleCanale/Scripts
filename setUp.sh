@@ -3,21 +3,20 @@
 function printHelp() {
 cat << EOF
 
-	Usage:
-	${PROGNAME}
+    Usage: ${PROGNAME}
 
-	Create a new .bashrc file with the template at `echoBlue "<dir>/Others/.bashrc_template"`
-	and the appropriate PATH variable
+    Create a new .bashrc file with the template at `echoBlue "<dir>/Others/.bashrc_template"`
+    and the appropriate PATH variable
 EOF
 }
 
 function declareConstants() {
-	return 0
+    return 0
 }
 
 function loadOptions() {
-	# unusedBehaviour="IGNORE"
-	return 0
+    # unusedBehaviour="IGNORE"
+    return 0
 }
 
 function sedeasy {
@@ -29,7 +28,7 @@ function run () {
 
     test -f "$bashrcFile" || error "$bashrcFile file not found"
 
-	sedeasy "__PATH__" "$PWD" $bashrcFile > "$HOME/.bashrc"
+    sedeasy "__PATH__" "$PWD" $bashrcFile > "$HOME/.bashrc"
 }
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"

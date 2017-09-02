@@ -408,9 +408,9 @@ function processArgs() {
         if [[ "$arg" =~ ^-(h|-help)$ ]] && [ $# -eq 1 ]; then
             printHelp && cat << EOF
 
-        More options:
-            --help|-h   :   Display this help
-            --verbose|-v:   Print more information on the process
+    More options:
+        --help|-h   :   Display this help
+        --verbose|-v:   Print more information on the process
 
 EOF
             exit 0
