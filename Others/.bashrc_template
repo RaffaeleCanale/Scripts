@@ -216,3 +216,10 @@ export SCRIPT_LIB="__PATH__/Others"
 export SCRIPT_DATA="__PATH__/Data"
 
 export PATH="$PATH:$SCRIPT_PATH"
+
+
+########## BASH COMPLETION ##########
+
+for comp in "__PATH__/BashCompletion/"*; do
+    . $comp
+done
