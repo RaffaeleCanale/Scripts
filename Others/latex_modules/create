@@ -1,0 +1,198 @@
+#!/bin/bash
+function module_print_help() {
+	cat << EOF
+`echoBlue "document_name"` `echoViolet "[OPTIONS]"`
+
+        Create a new LaTex document from a template
+
+        `echoViolet "[OPTIONS]"`
+          `echoViolet "-t, --template"`        Template to use.
+          `echoViolet "-p, --packages"` `echoBlue "pac..."` Manually specify the packages to import.
+          `echoViolet "-l, --lang"` `echoBlue "lang"`       Language to use in the document
+          `echoViolet "-i, --identity"`        Identity to use.
+EOF
+}
+
+function module_load_options() {
+	getOpt "(-t|--template)" template 1 "report"
+    getOpt "(-l|--lang)" language 1 "en"
+    getOpt "(-p|--packages)" packagesName -1
+	getOpt "(-i|--identity)" identity 1 "default"
+
+    if [ "$language" == "en" ]; then
+        languagePackage="\usepackage[english]{babel}"
+    elif [ "$language" == "fr" ]; then
+        languagePackage="\usepackage[frenchb]{babel}"
+    else
+        error "Language not supported: $language"
+    fi
+    return 0
+}
+
+#
+# Generate LaTex code for the packages and body input
+#
+function generateLatexInputs() {
+    if [ ${#packages[@]} -gt 0 ]; then
+        for file in "${packages[@]}"; do
+            test "$file" != "$templateFile" && echo "\input{\"$file\"}"
+        done
+    fi
+
+    echo "\input{\"$bodyTexFile\"}"
+}
+
+#
+# Generate the LaTex code for the given tag
+#
+function extractTaggedLines() {
+    if [ ${#packages[@]} -eq 0 ]; then
+        return
+    fi
+
+    for file in "${packages[@]}"; do
+        grep "$file" -e "^%${1}\(.${language,,}\)*:.*" \
+        | sed -r 's#^%...?.?.?:(.*)$#\1#g'
+    done
+}
+
+#
+# Add a package to list of packages
+#   1: Package tex file
+#
+function addPackage() {
+    # avoid duplicates
+	if [ ${#packages[@]} -gt 0 ]; then
+	    for file in "${packages[@]}"; do
+	        if [ "$(basename "$file")" == "$(basename "$1")" ]; then
+	            return
+	        fi
+	    done
+	fi
+
+    copyDependenciesFrom "$1"
+
+    test -d "Packages" || mkdir "Packages" || error "Cannot create dir $packages"
+
+    local packageCopy="Packages/$(basename "$1")"
+    cp "$1" "$packageCopy"
+    packages+=("$packageCopy")
+}
+
+function copyDependenciesFrom() {
+    local parent="$(dirname "$1")"
+
+    while read -r line; do
+        if [[ "$line" =~ ^%de:.* ]]; then
+            dependency=`echo "$line" | sed -r 's#^%de:(.*)$#\1#g'`
+            dependency="$parent/$dependency"
+            test -e "$dependency" || error "Dependency not found: $dependency"
+            cp -r "$dependency" .
+        fi
+    done < "$1"
+}
+
+function findPackage() {
+    findInDir "$1" "$PACKAGES_DIR" || error "Package not found: $1"
+	packageFile="$result"
+}
+
+function findTemplate() {
+    findInDir "$1" "$TEMPLATES_DIR" || error "Template not found: $1"
+	templateFile="$result"
+}
+
+function findIdentity() {
+	findInDir "$1" "$IDENTITIES_DIR" || error "Identity not found: $1"
+	identityFile="$result"
+}
+
+#   1: Query
+#   2: Directory to search
+function findInDir() {
+    for file in "$2/"*; do
+        if [ -f "$file" ] && softMatch "$1" "$(basename "$file")"; then
+            result="$file"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+#
+# Creates the package list from the given list
+#
+function setPackagesList() {
+    for arg in "$@"; do
+        findPackage "$arg"
+        addPackage "$packageFile"
+    done
+}
+
+#
+# Creates a body template into file $bodyTexFile
+#
+function createNewBody() {
+cat << EOF | applyProperties "$identityFile" --key-pre-proc 's/\.'$language'$//g' > "$bodyTexFile"
+
+$(extractTaggedLines "bd")
+
+\begin{document}
+$(extractTaggedLines "do")
+\end{document}
+
+$(extractTaggedLines "co")
+EOF
+}
+
+
+#
+# Creates the final template from the $templateFile to $mainTexFile
+#
+function createNewMainTexFile() {
+    cat << EOF | applyProperties "$identityFile" --key-pre-proc 's/\.'$language'$//g' > "$mainTexFile"
+$(cat "$templateFile")
+
+$languagePackage
+
+$(extractTaggedLines "te")
+
+% INPUTS
+$(generateLatexInputs)
+EOF
+}
+
+function copyIdentityResources() {
+	# TODO Limit scope?
+	cp -r "$IDENTITIES_DIR/Resources/"* .
+}
+
+function module_run() {
+    hasMoreArgs $#
+    local documentName="$1"
+    local mainTexFile="$1.tex"
+    local bodyTexFile="$1_body.tex"
+
+    if [ -f "$mainTexFile" ] || [ -f "$bodyTexFile" ]; then
+        echoYellow "Document already exists."
+        inputYesNo "Overwrite document? " || return
+    fi
+
+	# LOAD PACKAGES
+	packages=()
+	if [ ${#packagesName[@]} -gt 0 ]; then
+		setPackagesList "${packagesName[@]}"
+	fi
+
+
+	# LOAD TEMPLATE
+	findTemplate "$template"
+    copyDependenciesFrom "$templateFile"
+    packages+=("$templateFile")
+
+	findIdentity "$identity"
+	copyIdentityResources
+    createNewMainTexFile
+    createNewBody
+}

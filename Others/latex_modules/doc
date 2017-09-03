@@ -1,0 +1,134 @@
+#!/bin/bash
+
+
+
+function module_print_help() {
+    cat << EOF
+`echoViolet "</function_name>"`
+
+        Read and display documentation contained in LaTex file according
+        to a specific format
+EOF
+}
+
+function module_load_options() {
+    return 0
+}
+
+function declareConstants() {
+    readonly PARAM_REGEX="^%%\\s+[0-9]+:\\s+(.*)$"
+    readonly DOC_REGEX="^%%\\s+(.*)$"
+    readonly CMD_REGEX="^\\\\newcommand\\{(.*)\\}\\[.*\\]\\{.*"
+}
+
+function match() {
+    tmp=$(echo "$1" | sed -r "s#$2#\1#g")
+    if [ "$tmp" == "$1" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+function readAndPrintDoc() {
+    params=()
+    doc=""
+    packageName="$(basename "${1%.*}") "
+    packageNamePrinted=false
+
+    state=state_waitDocumentation
+
+    local tmp
+    while read -r line; do
+        $state "$line"
+    done < "$1"
+}
+
+function state_waitDocumentation() {
+    if match "$1" "$DOC_REGEX"; then
+        state=state_expectDocumentation
+        state_expectDocumentation "$1"
+    fi
+}
+
+function state_expectDocumentation() {
+    if match "$1" "$PARAM_REGEX"; then
+        params+=("$tmp")
+    elif match "$1" "$DOC_REGEX"; then
+        doc="${doc}${tmp}\n"
+    elif match "$1" "$CMD_REGEX"; then
+        name="$tmp"
+
+        completeFunction
+
+        params=()
+        doc=""
+        name=""
+        state=state_waitDocumentation
+    else
+        params=()
+        doc=""
+        name=""
+        state=state_waitDocumentation
+    fi
+}
+
+function completeFunction() {
+    if [ -z "${query:-}" ] || softMatch "$query" "$name"; then
+        $usageOnly && printUsage || printFull
+    fi
+}
+
+# name, doc, params
+function printUsage() {
+    if ! $packageNamePrinted; then
+        echo
+        echoBlue "  $packageName"
+        packageNamePrinted=true
+    fi
+
+    echoGreen "    \\$name"  -n
+    if [ ${#params[@]} -gt 0 ]; then
+        for param in "${params[@]}"; do
+            local p=$(echo "$param" | cut -f 1 -d " ")
+            echoGreen "{${p,,}}" -n
+        done
+    fi
+    echo
+}
+
+function printFull() {
+    printUsage
+    local i=1
+    if [ ${#params[@]} -gt 0 ]; then
+        for param in "${params[@]}"; do
+            echo "        $i: $param"
+            i=$((i+1))
+        done
+    fi
+    echo -e "    $doc"
+}
+
+
+# PATHS
+function module_run() {
+    # hasMoreArgs $#
+    # test -f "$1" || error "Not a file: $1"
+
+    if [ $# -eq 0 ]; then
+        usageOnly=true
+    elif [ $# -eq 1 ]; then
+        usageOnly=false
+        if [ "$1" != "?" ]; then
+            query="$1"
+        fi
+    else
+        error "Too many arguments"
+    fi
+
+    declareConstants
+    for package in "$PACKAGES_DIR/"*; do
+        readAndPrintDoc "$package"
+    done
+    echo
+}

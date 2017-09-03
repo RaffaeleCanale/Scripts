@@ -1,0 +1,96 @@
+#!/bin/bash
+function module_print_help() {
+    cat << EOF
+$(echoBlue "</tex_file>") $(echoViolet "--watch --full-output")
+
+        Watch the current directory (and sub-directory) for changes from .tex files.
+        When a file is changed, the output PDF is automatically re-generated.
+
+        $(echoBlue tex_file) Name of the main tex file (used to generate the PDF).
+                 If not specified, the script will "guess" which to use.
+
+        $(echoViolet "--watch")        Watch for file changes
+        $(echoViolet "--watch-legacy") Watch for file changes using bash-builtins
+        $(echoViolet "--full-output")  In case of error of the pdflatex build, print the whole error output
+EOF
+
+}
+
+function module_load_options() {
+    getOpt "--full-output" fullOutput
+    getOpt "--watch" watch
+    getOpt "--watch-legacy" watchLegacy
+    return 0
+}
+
+function legacyHasChanged() {
+	if [ ! -f "$1" ]; then
+		return 0
+	fi
+
+	date=$(date +%s -r "$1")
+	oldDate="${dateMap[$1]}"
+
+	# echo "$date  ???   $oldDate"
+	if [ "$date" -eq "$oldDate" ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+function legacyWatch() {
+    unset dateMap
+    declare -A dateMap
+
+    # Initialize map
+    for file in $(find . -name '*.tex'); do # CREATE ENTRY file <-> file_date
+		date=$(date +%s -r "$file")
+		dateMap["$file"]="$date"
+	done
+
+    sleep 3
+
+    for file in "${!dateMap[@]}"; do
+        if legacyHasChanged "$file"; then
+            build
+        fi
+    done
+}
+
+function build() {
+	echo -n "Build $(date +"%D  %T") "
+	output=$(pdflatex -shell-escape -interaction=nonstopmode -file-line-error "$mainTexFile")
+	# pdflatex -interaction=batchmode "$mainTexFile"
+	if [ $? -ne 0 ]; then
+		echoRed "FAILED"
+
+		$fullOutput || output=$(echo "$output" | grep -i ".*:[0-9]*:.*")
+
+		echo "$output"
+		echo
+	else
+		echo "$output" | grep -i ".*:[0-9]*:.*"
+		echoGreen "SUCCESS"
+	fi
+}
+
+function module_run() {
+    changeIFS
+
+    selectMainFile "${1:-}"
+
+	build
+
+    local directory="$(dirname "$mainTexFile")"
+    if $watch; then
+        while inotifywait -q -r -e close_write "$directory" > /dev/null; do
+            build
+        done
+    elif $watchLegacy; then
+        while true; do
+            legacyWatch
+        done
+    fi
+
+}

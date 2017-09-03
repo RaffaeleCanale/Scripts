@@ -1,0 +1,122 @@
+#!/bin/bash
+function module_print_help() {
+    cat << EOF
+$(echoBlue "</input_file>") `echoViolet [OPTIONS]`
+
+            $(echoBlue input_file) Main file of the LaTex document to export
+
+        `echoViolet [OPTIONS]`
+            `echoViolet "-o, --output"`           Output name (if nothing specified, a name is automatically selected)
+            `echoViolet "-p, --include-packages"` Include all the packages inside the main tex file
+            `echoViolet "-b, --include-body"`     Include the body inside the main tex file
+            `echoViolet "-a, --include-all"`      Same as `echoViolet "--include-packages --include-body"`
+
+EOF
+}
+
+function module_load_options() {
+    getOpt "(-o|--output)" outputOpt 1 ""
+    output="$outputOpt" # Dirty hack...
+    getOpt "(-a|--include-all)" includeAll
+    if $includeAll; then
+        includePackages=true
+        includeBody=true
+    else
+        getOpt "(-p|--include-packages)" includePackages
+        getOpt "(-b|--include-body)" includeBody
+    fi
+
+    return 0
+}
+
+
+function exportDocument() {
+     while read -r line; do
+        if [[ "$line" =~ ^\\input\{.*\}$ ]]; then   # Is input{...}
+            path=$(echo "$line" | sed 's/\\\input{"\(.*\)"}/\1/g')
+
+            inputIsBody=false
+            if [[ "$path" =~ \_body\.tex$ ]]; then
+                inputIsBody=true
+            fi
+
+            if $inputIsBody && $includeBody; then
+                inputDocument "$path"
+            elif ! $inputIsBody && $includePackages; then
+                inputDocument "$path"
+            else
+                bringDocument "$path"
+            fi
+
+        else
+            echo "$line"
+        fi
+    done < "$mainTexFile" > "$output"
+}
+
+function inputDocument() {
+    cat "$(solvePath "$1")" 2> /dev/null
+    echo
+}
+
+function bringDocument() {
+    local file="$(solvePath "$1")"
+    local target="$(dirname "$output")/$(basename "$file")"
+
+    if [ "$(realpath "$file")" != "$(realpath "$target")" ]; then
+        cp "$file" "$target"
+    fi
+
+    echo "\input{\"$(basename "$target")\"}"
+}
+
+function solvePath() {
+    cd $(dirname "$mainTexFile")
+    realpath "$1" 2> /dev/null || error "Include file not found: $1"
+}
+
+function exportResources() {
+    local outputDir="$(dirname "$output")"
+    local documentDir="$(dirname "$mainTexFile")"
+
+    for file in "$documentDir/"*; do
+        if [ -d "$file" ]; then
+            local dirName="$(basename "$file")"
+            if [ "$dirName" != "Packages" ] && [ "$dirName" != "$EXPORTED_DEF_DIR" ]; then
+                cp -r "$file" "$outputDir"
+            fi
+        fi
+    done
+}
+
+function module_run() {
+    EXPORTED_DEF_DIR="exported"
+
+    # assertMore $#
+
+    selectMainFile "${1:-}"
+
+    if [ "$output" == "" ]; then
+        test -d "$EXPORTED_DEF_DIR" || mkdir "$EXPORTED_DEF_DIR"
+        output="$EXPORTED_DEF_DIR/$(basename "$mainTexFile")"
+    fi
+
+    test "$(realpath "$mainTexFile")" != "$(realpath "$output")" || error "Output file cannot be the same as the input file"
+
+    exportDocument
+    exportResources
+    # sourceFile="$(getTexFile "$1")"
+    # if [ $# -gt 1 ]; then
+    #     targetFile="$(getTexFile "$2")"
+    # else
+    #     getFreshFile "$(basename "$sourceFile")" targetFile
+    # fi
+    #
+    # test -f "$sourceFile" || error "File not found: $sourceFile"
+    # if [ -f "$targetFile" ]; then
+    #     test "$(realpath "$sourceFile")" != "$(realpath "$targetFile")" || error "Output file cannot be the same as the input file"
+    #     inputYesNo "Output file already exists, override?" || return
+    # fi
+    #
+    # exportDocument
+}
