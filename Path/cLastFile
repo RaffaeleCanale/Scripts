@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function declareConstants() {
-    readonly TARGET_DIRECTORY="$HOME/Downloads/Chrome/"
+    $1 TARGET_DIRECTORY "$HOME/Downloads/Chrome/"
 }
 
 function printHelp() {
