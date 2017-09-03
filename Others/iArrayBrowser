@@ -1,0 +1,135 @@
+#!/bin/bash
+# Add the ability to perform a selection using the arrows
+
+#
+# Parameters:
+#   1: Command to execute
+#
+# Return:
+#   Array stored in $result
+#
+function build_array_from_cmd() {
+    SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+    
+    result=()
+    cmd="$1"
+
+    for element in `$@`; do
+        result+=("$element")
+        # echo "Found $element"
+    done
+    IFS=$SAVEIFS
+}
+
+#
+# Parameters:
+#   1: Function display_line [element] [index 0-based] [prefix]
+#   2: Function enter_action [element] [index 0-based]  => return 0 to break loop
+#	3: Function char_accept [char]
+#   @: Array to browse
+#
+function browse_array() {
+    local char=
+    local rest=
+    local histindex=0   
+
+    local display_line="$1"
+    shift
+    local enter_action="$1"
+    shift
+    local char_accept="$1"
+    shift
+    
+    local array=("$@")
+
+    $display_line "${array[$histindex]}" "$histindex" "\r\033[K"
+
+    # Read one character at a time
+    while IFS= read -r -n 1 -s char; do        
+        if [ "$char" == $'\x1b' ]; then            
+            # \x1b is the start of an escape sequence
+            # Get the rest of the escape sequence (3 characters total)
+            while IFS= read -r -t 0.01 -n 2 -s rest; do
+                char+="$rest"
+                break
+            done        
+        fi
+        if [ "$char" == $'\x1b[A' ]; then
+            # Up                    
+            if [ $histindex -gt 0 ]; then                
+                histindex=$((histindex-1))            
+            fi
+
+            $display_line "${array[$histindex]}" "$histindex" "\r\033[K"
+            
+        elif [ "$char" == $'\x1b[B' ]; then
+            # Down
+            if [ $((histindex+1)) -lt ${#array[@]} ]; then
+                histindex=$((histindex+1))
+            fi
+
+            $display_line "${array[$histindex]}" "$histindex" "\r\033[K"
+            # echo -ne "\r\033[K$element"
+        elif [ -z "$char" ]; then # Newline
+            $enter_action "${array[$histindex]}" "$histindex" "action" && return 0
+
+        elif [ "$char" == $'\x1b' ]; then # Escape only
+            echo
+            return 1
+
+        elif $char_accept "$char"; then
+        	$enter_action "${array[$histindex]}" "$histindex" "$char" && return 0
+        fi
+    done
+}
+
+
+read_history() {
+    local char=
+    local string=
+    local -a history=( )
+    local -i histindex=0
+
+    # Read one character at a time
+    while IFS= read -r -n 1 -s char
+    do
+        if [ "$char" == $'\x1b' ] # \x1b is the start of an escape sequence
+        then
+            # Get the rest of the escape sequence (3 characters total)
+            while IFS= read -r -n 2 -s rest
+            do
+                char+="$rest"
+                break
+            done
+        fi
+
+        if [ "$char" == $'\x1b[A' ]
+        then
+            # Up
+            if [ $histindex -gt 0 ]
+            then
+                histindex+=-1
+                echo -ne "\r\033[K${history[$histindex]}"
+            fi
+        elif [ "$char" == $'\x1b[B' ]
+        then
+            # Down
+            if [ $histindex -lt $((${#history[@]} - 1)) ]
+            then
+                histindex+=1
+                echo -ne "\r\033[K${history[$histindex]}"
+            fi
+        elif [ -z "$char" ]
+        then
+            # Newline
+            echo
+            history+=( "$string" )
+            string=
+            histindex=${#history[@]}
+        else
+            echo -n "$char"
+            string+="$char"
+        fi
+    done
+}
