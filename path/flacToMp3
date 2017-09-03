@@ -19,7 +19,6 @@ function declareConstants() {
 
 function loadOptions() {
 	getOpt "-o" out 1 "Transcoded"
-	return 0
 }
 
 function run() {

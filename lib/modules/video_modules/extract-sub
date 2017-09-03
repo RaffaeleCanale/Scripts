@@ -1,0 +1,72 @@
+#!/bin/bash
+function module_print_help() {
+	cat << EOF
+`echoBlue "<file>"` `echoViolet "-t track -e extension"`
+
+        Extract subtitles
+
+EOF
+}
+
+function module_load_options() {
+	getOpt "-e" extension 1 "srt"
+	getOpt "-t" track 1
+    return 0
+}
+
+function findSubtitlesTrack() {
+	SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+	local info=(`mkvinfo "$1" | grep "subtitles" -B 2`)
+	IFS=$SAVEIFS
+
+		if [ ${#info[@]} -eq 3 ]; then
+		local result=`echo ${info[0]} | sed -e 's/.*\(.\))$/\1/'`
+
+		if [[ "$result" =~ ^[0-9]+$ ]]; then
+			echo "$result"
+			return 0
+		fi
+	fi
+
+	return 1
+}
+
+function warning() {
+	echoYellow $@
+	return 1
+}
+
+function extract() {
+	test -f "$1" || return warning "File not found: $1"
+	test ${1: -4} == ".mkv" || return warning "Not a mkv file: $1"
+
+	local filename="${1%.*}"
+	local subFileName="${filename}.${extension}"
+	if [ -f "$subFileName" ]; then
+		return warning "Subtitle file for $1 already exists"
+	fi
+
+	local subTrack
+	if [ -z "$track" ]; then
+		subTrack=`findSubtitlesTrack "$1"`
+	else
+		subTrack="$track"
+	fi
+
+
+	if [ $? -ne 0 ]; then
+		echoYellow "Couldn't find subtitles for $1"
+		return 1
+	fi
+
+	mkvextract tracks "$1" "${subTrack}:${subFileName}"
+}
+
+function module_run() {
+	hasMoreArgs $#
+
+	for file in "$@"; do
+		extract "$file"
+	done
+}

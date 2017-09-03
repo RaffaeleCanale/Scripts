@@ -1,0 +1,4 @@
+#!/bin/bash
+path="__DUPLICATES_JAR__"
+
+java -jar "$path" "$@"

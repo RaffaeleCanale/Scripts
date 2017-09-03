@@ -1,0 +1,53 @@
+#!/bin/bash
+# Opens a program and focus it afterwards
+
+execute_found_old_cmd() {
+    wmctrl -ia "$1"
+}
+
+execute_found_new_cmd() {
+    wmctrl -ia "$1"
+}
+
+
+get_current_desktop() {
+    wmctrl -d | grep -Eow "[0-9]  \*.*" | head -c 1
+}
+
+find_in_current_desktop() {
+    wmctrl -l | grep -Eow "[^ ]*  $1 [^ ]* .*$2" | head -c 10
+}
+
+launch_cmd="$1"
+search_name="$2"
+
+if [ $# -gt 2 ]; then
+    desktop="$3"
+else
+    desktop=`get_current_desktop`
+fi
+
+search_window=`find_in_current_desktop "$desktop" "$search_name"`
+
+if [ -n "$search_window" ]; then
+    # echo "Found: $search_window"
+    execute_found_old_cmd "$search_window"
+else
+    # echo "No result found"
+    $launch_cmd &
+    breakCount=10
+
+    while [ $breakCount -gt 0 ]; do
+        search_window=`find_in_current_desktop "$desktop" "$search"`
+        if [ -n "$search_window" ]; then
+            execute_found_new_cmd "$search_window"
+            exit 0
+        else
+            let breakCount=$breakCount-1
+        fi
+        sleep 0.25
+    done
+
+    kdialog --passivepopup "Couldn't find new $search window" 2
+    exit 1
+fi

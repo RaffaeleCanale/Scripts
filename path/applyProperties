@@ -23,7 +23,7 @@ function declareConstants() {
 function loadOptions() {
 	# unusedBehaviour="IGNORE"
 	getOpt -r reverse
-    getOpt "--key-pre-proc" keyPreProc 1 "''"
+    # getOpt "--key-pre-proc" keyPreProc 1 "''"
 	return 0
 }
 
@@ -46,7 +46,7 @@ function buildSed() {
 
 	while read -r line; do
 		if [ -n "$line" ]; then
-	        local key=$(echo "$line" | cut -d '=' -f 1 | trim | sed $keyPreProc | escape)
+	        local key=$(echo "$line" | cut -d '=' -f 1 | trim | escape)
 	        local value=$(echo "$line" | cut -d '=' -f 2- | trim | escape)
 
 	        test -z "$sedsLine" || sedsLine="$sedsLine | "

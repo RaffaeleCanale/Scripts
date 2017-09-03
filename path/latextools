@@ -1,10 +1,10 @@
 #!/bin/bash
 
 function declareConstants() {
-    $1 PACKAGES_DIR "$HOME/Documents/Documents/Latex Templates/Packages"
-    $1 TEMPLATES_DIR "$HOME/Documents/Documents/Latex Templates/Templates"
-    $1 IDENTITIES_DIR "$HOME/Documents/Documents/Latex Templates/Identities"
-    $1 MODULES "$SCRIPT_LIB/latex_modules"
+    $1 PACKAGES_DIR "__LATEX_TOOLS__.__PACKAGES__"
+    $1 TEMPLATES_DIR "__LATEX_TOOLS__.__TEMPLATES__"
+    $1 IDENTITIES_DIR "__LATEX_TOOLS__.__IDENTITIES__"
+    $1 MODULES "$SCRIPT_LIB/modules/latex_modules"
 }
 
 function printHelp() {

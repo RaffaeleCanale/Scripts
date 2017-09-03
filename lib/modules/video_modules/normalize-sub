@@ -1,0 +1,78 @@
+#!/bin/bash
+function module_print_help() {
+	cat << EOF
+`echoBlue "<file>"`
+
+        Extract subtitles
+
+EOF
+}
+
+function module_load_options() {
+	# getOpt "-e" extension 1 "srt"
+	# getOpt "-t" track 1
+    return 0
+}
+
+
+function findSubs() {
+	if isSubFile "$1"; then
+		echo "$1"
+		return 0
+	fi
+
+	local filename="${1%.*}"
+	local file
+	for file in "$filename"*; do
+		if [ "$file" != "$1" ] && isSubFile "$file"; then
+			echo "$file"
+			return 0
+		fi
+		# echo $file
+	done
+
+	# echo "A"
+	# if [ "$3" == "mkv" ]; then
+
+	# fi
+	#
+	return 1
+}
+
+function normalize() {
+	test -f "$1" || error "File not found: $1"
+
+	deleteSubs=false
+
+	local subs
+	local output="${1%.*}.srt"
+	subs=`findSubs "$1"`
+
+	if [ $? -ne 0 ]; then
+		video extract-sub "$1" -e "ass" # > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			subs=`echo "${1%.*}".ass`
+			deleteSubs=true
+
+		else
+			echoYellow "No subs found for: $1"
+			return 1
+		fi
+	fi
+	ffmpeg -i "$subs" "$output"
+
+	sed -e 's/<[^>]*>//g' -i "$output"
+
+
+	if $deleteSubs; then
+		rm "$subs"
+	fi
+}
+
+function module_run() {
+	hasMoreArgs $#
+
+	for file in "$@"; do
+		normalize "$file"
+	done
+}

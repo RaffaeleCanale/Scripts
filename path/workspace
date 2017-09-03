@@ -20,7 +20,7 @@ EOF
 }
 
 function declareConstants() {
-    readonly NODE_SCRIPT="$SCRIPT_LIB/workspace/workspace.js"
+    $1 NODE_SCRIPT "$SCRIPT_LIB/modules/workspace_modules/workspace.js"
     $1 CONFIG "$SCRIPT_DATA/workspaces.json"
     return 0
 }

@@ -1,4 +1,0 @@
-#!/bin/bash
-path="/home/canale/Documents/Projects/Archives/Duplicates/build/Duplicates.jar"
-
-java -jar "$path" "$@"

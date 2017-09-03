@@ -1,2 +1,11 @@
 node_modules
 .directory
+
+path.c/
+progress/
+archived/
+
+data/*
+!data/*.example
+
+*.pyc
