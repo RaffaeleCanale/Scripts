@@ -1,0 +1,66 @@
+#!/bin/bash
+
+function printHelp() {
+	cat << EOF
+
+	Usage:
+	${PROGNAME} `echoBlue apply` `echoGreen workspace`
+		Apply a workspace
+
+		$(echoGreen workspace): Name or index of the workspace (or empty to use an interactive dialog)
+
+	${PROGNAME} `echoBlue list`
+		List all the workspaces
+
+	${PROGNAME} `echoBlue config`
+		Open the config file
+EOF
+}
+
+function declareConstants() {
+	readonly NODE_SCRIPT="$SCRIPT_LIB/workspace/workspace.js"
+	$1 CONFIG "$SCRIPT_DATA/workspaces.json"
+	return 0
+}
+
+function loadOptions() {
+	# unusedBehaviour="IGNORE"
+	getOpt "-i" interactive
+	return 0
+}
+
+function apply() {
+	if [ $# -eq 0 ]; then
+		config=$(kdialog --menu "Select" `list`)
+		test -n "$config" || return
+	else
+		config="$1"
+	fi
+
+	node "$NODE_SCRIPT" "$CONFIG" apply "$config"
+}
+
+function list() {
+	node "$NODE_SCRIPT" "$CONFIG" list
+}
+
+function config() {
+	xdg-open "$CONFIG"
+}
+
+function run () {
+	hasMoreArgs $#
+
+	test -f "$CONFIG" || error "Config file not found: $CONFIG"
+
+	local cmds=(apply list config)
+	local cmd="$1"
+	if ! arrayContains "$cmd" "${cmds[@]}"; then
+		error "Unknown command $cmd"
+	fi
+
+	shift
+	$cmd "$@"
+}
+
+source "$SCRIPT_LIB/scriptStarter"
