@@ -29,3 +29,5 @@ qnap --help
 
 ### TODO
 Add LaTex templates
+**Important:** Run `npm install` on relevant modules
+chmod executable files (including modules)
