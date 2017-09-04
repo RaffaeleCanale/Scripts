@@ -32,7 +32,7 @@ function exportBashrc() {
 
     test -f "$bashrcFile" || error "$bashrcFile file not found"
 
-    mv "$HOME/.bashrc" > "$HOME/.bashrc.original"
+    mv "$HOME/.bashrc" "$HOME/.bashrc.original"
 
     sedeasy "__PATH__" "$PWD" $bashrcFile > "$HOME/.bashrc"
 
