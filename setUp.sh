@@ -54,11 +54,26 @@ function compileScripts() {
     done
 }
 
+function installNpmModules() {
+    for module in "./lib/modules/"*; do
+        pushd $module > /dev/null
+
+        chmod +x *
+
+        if [ -f "package.json" ]; then
+            npm install
+        fi
+
+        popd > /dev/null
+    done
+}
+
 function run() {
     set +o nounset
 
     exportBashrc
     compileScripts
+    installNpmModules
 }
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"
