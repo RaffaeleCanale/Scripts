@@ -21,7 +21,7 @@ EOF
 
 function declareConstants() {
     $1 NODE_SCRIPT "$SCRIPT_LIB/modules/workspace_modules/workspace.js"
-    $1 CONFIG "$SCRIPT_DATA/workspaces.json"
+    $1 CONFIG "$SCRIPT_DATA/workspaces.js"
     return 0
 }
 
