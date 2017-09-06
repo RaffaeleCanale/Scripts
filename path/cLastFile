@@ -64,7 +64,7 @@ function run() {
     changeIFS
 
     targetDirectory="$TARGET_DIRECTORY"
-    outputDir="$PWD"
+    outputDir="$PWD/"
 
     if $act_list; then
         if $count_interactive; then
@@ -112,7 +112,7 @@ function run() {
         fi
 
         for file in "${files[@]}"; do
-            performAction "$file"
+            performAction "$targetDirectory/$file"
         done
     fi
 }
@@ -129,7 +129,7 @@ function performAction() {
         verbose "$(basename $1) copied to $outputDir" -p
 
     elif $act_move; then
-        mv "$1" "$outputDir" || error "Couldn't move to $outputDir:\n$1"
+        mv "$1" "$outputDir" || error "Couldn't move $1 to $outputDir"
 
         verbose "$(basename $1) moved to $outputDir" -p
 
