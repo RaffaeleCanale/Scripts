@@ -89,6 +89,7 @@ alias pbpaste='xclip -sel clip -o'
 alias which='type -a'
 alias path='echo -e ${PATH//:/\\n}'
 alias ssudo='sudo -E env "PATH=$PATH"'
+alias dc='docker-compose'
 
 #### Git
 alias gitlog='git log --graph --abbrev-commit --decorate --date=relative'
