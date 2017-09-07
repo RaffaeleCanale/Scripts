@@ -29,3 +29,5 @@ qnap --help
 
 ### TODO
 Add LaTex templates
+
+**leds**: Ensure that `leds blink` restores the initial status of the led
