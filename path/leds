@@ -66,10 +66,17 @@ function list() {
     done
 }
 
-function chown_files() {
+function chownFiles() {
     for i in "${!LIGHTS[@]}"; do
         sudo chown $USER "${LIGHTS[$i]}"
     done
+}
+
+function checkFileOwner() {
+  local uname2="$(stat --format '%U' "$target_path")"
+  if [ "x${uname2}" != "x${USER}" ]; then
+    error "You do not have permission to access that config file\nUse 'sudo' or change file owner with 'leds chown'"
+  fi
 }
 
 function run () {
@@ -86,14 +93,17 @@ function run () {
     target_path=${LIGHTS[$target]}
 
     if [ $action == "chown" ]; then
-        chown_files
+        chownFiles
     elif [ $action == "list" ]; then
         list
     elif [ $action == "on" ]; then
+        checkFileOwner
         turnOn
     elif [ $action == "off" ]; then
+        checkFileOwner
         turnOff
     elif [ $action == "blink" ]; then
+        checkFileOwner
         blink
     else
         error "Invalid action: $action"
