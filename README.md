@@ -31,3 +31,7 @@ qnap --help
 Add LaTex templates
 
 **leds**: Ensure that `leds blink` restores the initial status of the led
+
+**workspace**: Applying a workspace twice will shuffle order of windows of the same type
+
+**other**: ability to add and sync computer-dependent scripts and aliases (eg: stack scripts, ssh-add on startup, ...)
