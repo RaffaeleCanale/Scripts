@@ -106,7 +106,12 @@ function echoGrey() {
 
 function changeIFS() {
     SAVEIFS=$IFS
-    IFS=$(echo -en "\n\b")
+
+    if [ $# -gt 0 ]; then
+        IFS="$1"
+    else
+        IFS=$(echo -en "\n\b")
+    fi
 }
 
 function resetIFS() {
@@ -124,13 +129,23 @@ function createTmpDir() {
     eval "$1=\"$_tmp\""
 }
 
+# Get the filename and extension of a given file
+#   Parameters:
+#       1: Output variables for the filename and extension separated by comma
+#       2: Output variable for the extension
+#
+# Example use: getFileNameAndExtension filename,ext "$file"
 function getFileNameAndExtension() {
-    filename=$(basename "$1")
-    extension=".${filename##*.}"
-    if [ "$extension" == ".$filename" ]; then
-        extension=""
+    local _filename=$(basename "$2")
+    local _extension=".${_filename##*.}"
+    if [ "$_extension" == ".$_filename" ]; then
+        _extension=""
     fi
-    filename="${filename%.*}"
+    _filename="${_filename%.*}"
+
+    IFS="," read -ra vars <<< "$1"
+    eval "${vars[0]}=\"$_filename\""
+    eval "${vars[1]}=\"$_extension\""
 }
 
 # Create a temporary directory (that will automatically be deleted)
@@ -140,7 +155,7 @@ function getFileNameAndExtension() {
 function createTmpFile() {
     local _tmp
     if [ $# -gt 1 ]; then
-        getFileNameAndExtension "$2"
+        getFileNameAndExtension filename,extension "$2"
 
         _tmp=$(mktemp $filename.XXX$extension)
     else
@@ -154,20 +169,20 @@ function createTmpFile() {
 
 #
 # Parameters:
-#   1: File path
-#   2: Output variable
+#   1: Output variable
+#   2: File path
 #
 function getFreshFile() {
-    getFileNameAndExtension "$1"
+    getFileNameAndExtension filename,extension "$2"
 
-    local _result="$filename$extension"
+    local _result="$(dirname "$2")/${filename}${extension}"
     local _i=1
     while [ -f "$_result" ]; do
         _i=$((_i+1))
         _result="${filename}_$_i$extension"
     done
 
-    eval "$2=\"$_result\""
+    eval "$1=\"$_result\""
 }
 
 #
@@ -318,21 +333,26 @@ function getOpt() {
     local tmpArgs=()
     local i=0
     local optionSet=false
+    local ro=""
+
+    if $READONLY; then
+        ro="readonly "
+    fi
 
     while [ $i -lt "${#ARGUMENTS[@]}" ]; do
         if ! $optionSet && [[ "${ARGUMENTS[$i]}" =~ ^$1$ ]]; then
             # echo MATCH FOR ${ARGUMENTS[$i]} AND $1
             if [ $# -lt 3 ] || [ "$3" == "0" ]; then
-                eval "readonly $2=true"
+                eval "${ro}$2=true"
             elif [ "$3" == "OPT" ]; then
-                eval "readonly $2=${ARGUMENTS[$i]}"
+                eval "${ro}$2=${ARGUMENTS[$i]}"
 
             elif [ "$3" == "1" ]; then
                 i=$((i+1))
 
                 hasMoreArgs "${#ARGUMENTS[@]}" "$((i-1))" "Missing arguments for $1"
 
-                eval "readonly $2=${ARGUMENTS[$i]}"
+                eval "${ro}$2=${ARGUMENTS[$i]}"
 
             elif [ "$3" == "-1" ]; then
                 eval "$2=()"
@@ -370,18 +390,18 @@ function getOpt() {
         return 0
 
     elif [ $# -lt 3 ] || [ "$3" == "0" ]; then # Is a boolean opt
-        eval "readonly $2=false"
+        eval "${ro}$2=false"
 
     elif [ "$3" == "OPT" ]; then # OPT case
         if [ $# -gt 3 ]; then
-            eval "readonly $2=$4"
+            eval "${ro}$2=$4"
         else
-            eval "readonly $2=\"\""
+            eval "${ro}$2=\"\""
         fi
 
     elif [ $# -gt 3 ]; then # Apply default value
         if [ $3 -eq 1 ]; then
-            eval "readonly $2=$4"
+            eval "${ro}$2=$4"
         else
             # local tmp=("${@:4}")
             eval "$2=(\"${@:4}\")"
@@ -389,7 +409,7 @@ function getOpt() {
         fi
     elif [ $# -eq 3 ]; then # There are no default values
         if [ $3 -eq 1 ]; then
-            eval "readonly $2=\"\""
+            eval "${ro}$2=\"\""
         else
             eval "$2=()"
         fi
@@ -399,9 +419,48 @@ function getOpt() {
     return 1
 }
 
+#
+# Get mandatory arguments
+#
+# Example use: getArg file,output "$@"
+#
+function getArg() {
+    local vars
+    local varsCount
+    local targetArgs
+    local updateARGUMENTS=false
+    local ro=""
+
+    if $READONLY; then
+        ro="readonly "
+    fi
+
+    IFS="," read -ra vars <<< "$1"
+    varsCount=${#vars[@]}
+
+    if [ $# -gt 1 ]; then
+        shift
+        targetArgs=("$@")
+    elif [ ${#ARGUMENTS[@]} -eq 0 ]; then
+        targetArgs=()
+    else
+        targetArgs=("${ARGUMENTS[@]}")
+        updateARGUMENTS=true
+    fi
+
+    hasMoreArgs ${#targetArgs[@]} $varsCount
+    for (( i = 0; i < $varsCount; i++ )); do
+        eval "${ro}${vars[$i]}=\"${targetArgs[$i]}\""
+    done
+
+    if $updateARGUMENTS; then
+        ARGUMENTS=("${ARGUMENTS[@]:$varsCount}")
+    fi
+}
+
 
 # private
-function processArgs() {
+function _processArgs() {
     local arg
     for arg in "$@"; do
 
@@ -439,17 +498,24 @@ function checkUnused() {
 }
 
 function setConstant() {
+    local ro=""
+
+    if $READONLY; then
+        ro="readonly "
+    fi
+
     eval "test -z \${$1+x}"
     if [ $? -eq 0 ]; then
-        eval "readonly $1=\"$2\""
+        eval "${ro}$1=\"$2\""
     else
-        eval "readonly $1=\"\$$1\""
+        eval "${ro}$1=\"\$$1\""
     fi
 }
 
 set -o nounset
 
 PROGNAME=$(basename $0)
+READONLY=true
 onExitItems=()
 verbose=false
 unusedBehaviour="EXIT"
@@ -457,7 +523,7 @@ unusedBehaviour="EXIT"
 declareConstants setConstant
 ARGUMENTS=()
 
-processArgs "$@"
+_processArgs "$@"
 
 loadOptions
 

@@ -35,3 +35,5 @@ Add LaTex templates
 **workspace**: Applying a workspace twice will shuffle order of windows of the same type
 
 **other**: ability to add and sync computer-dependent scripts and aliases (eg: stack scripts, ssh-add on startup, ...)
+
+**other**: add 'export' to normalize scripts

@@ -1,0 +1,18 @@
+__crypt()
+{
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    local modes="encrypt decrypt edit"
+
+    if [ $COMP_CWORD -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "${modes}" -- ${cur}) )
+    elif [[ "$cur" == -* ]]; then
+        COMPREPLY=( $(compgen -W "-o --output --stdout" -- ${cur}) )
+    else
+        COMPREPLY=( $(compgen -f  -- "${cur}" ) )
+    fi
+}
+
+complete -F __crypt crypt
