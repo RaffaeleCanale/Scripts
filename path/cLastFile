@@ -112,7 +112,7 @@ function run() {
         fi
 
         for file in "${files[@]}"; do
-            performAction "$targetDirectory/$file"
+            performAction "$file"
         done
     fi
 }
@@ -123,29 +123,32 @@ function run() {
 #       2: Index 0-based
 #
 function performAction() {
-    if $act_copy; then
-        cp "$1" "$outputDir" || error "Couldn't copy to $outputDir:\n$1"
+    local target="$targetDirectory/$1"
 
-        verbose "$(basename $1) copied to $outputDir" -p
+    if $act_copy; then
+        cp "$target" "$outputDir" || error "Couldn't copy to $outputDir:\n$target"
+
+        verbose "$(basename $target) copied to $outputDir" -p
 
     elif $act_move; then
-        mv "$1" "$outputDir" || error "Couldn't move $1 to $outputDir"
+        mv "$target" "$outputDir" || error "Couldn't move $target to $outputDir"
 
-        verbose "$(basename $1) moved to $outputDir" -p
+        verbose "$(basename $target) moved to $outputDir" -p
 
     elif $act_remove; then
-        if $(inputYesNo "Do you really want to remove $(basename $1)?"); then
-            rm "$1" || error "Couldn't remove $1"
+        if $(inputYesNo "Do you really want to remove $(basename $target)?"); then
+            rm "$target" || error "Couldn't remove $target"
 
-            verbose "$(basename $1) removed" -p
+            verbose "$(basename $target) removed" -p
         fi
 
     elif $act_trash; then
-        kioclient move "$1" trash:/ || error "Couldn't move $1 to trash"
-        verbose "Moved to TRASH: $(basename $1)" -p
+        # kioclient move "$target" trash:/ || error "Couldn't move $target to trash"
+        trash "$target" || error "Couldn't move $target to trash"
+        verbose "Moved to TRASH: $(basename $target)" -p
 
     else
-        xdg-open "$1" &
+        xdg-open "$target" &
 
     fi
     return 0
