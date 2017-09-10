@@ -198,7 +198,7 @@ export PS1="\$(last_cmd_status) \W\[\033[33m\]\$(parse_git_branch)\[\033[00m\]\n
 
 export SCRIPT_PATH="__PATH__/path.c"
 export SCRIPT_LIB="__PATH__/lib"
-export SCRIPT_DATA="__PATH__/data"
+export SCRIPT_DATA="__PATH__/user"
 
 export PATH="$PATH:$SCRIPT_PATH"
 

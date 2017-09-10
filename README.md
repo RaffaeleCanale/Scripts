@@ -9,7 +9,7 @@ Collection of miscellaneous bash scripts, including:
 
 # Installation
 
-Rename `data/config.properties.example` to `data/config.properties` and fill the properties.
+Rename `user/config.properties.example` to `user/config.properties` and fill the properties.
 
 Then run:
 ```

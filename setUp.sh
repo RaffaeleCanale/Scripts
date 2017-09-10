@@ -15,7 +15,7 @@ EOF
 
 function declareConstants() {
     readonly COMPILED_PATH_DIR="./path.c"
-    readonly CONFIG_FILE="./data/config.properties"
+    readonly CONFIG_FILE="./user/config.properties"
 }
 
 function loadOptions() {

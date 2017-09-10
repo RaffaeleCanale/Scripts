@@ -5,7 +5,7 @@ path.c/
 progress/
 archived/
 
-data/*
-!data/*.example
+user/*
+!user/*.example
 
 *.pyc
