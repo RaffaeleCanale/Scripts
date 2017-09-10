@@ -207,6 +207,9 @@ function _sync_pull() {
 # 2. Share dir
 function _sync_push() {
     if $delete; then
+        # TODO Use --dry-run first
+        # TODO Explore -u option
+        # TODO Maybe use unison?
         rsync -vaz --delete --progress "$1" "$(dirname "$2")"
     else
         # echo "$1 <> $2"
