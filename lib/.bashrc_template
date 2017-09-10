@@ -206,5 +206,13 @@ export PATH="$PATH:$SCRIPT_PATH"
 ########## BASH COMPLETION ##########
 
 for comp in "${SCRIPT_LIB}/completion/"*; do
-    . $comp
+    . "$comp"
 done
+
+if [ -d "$SCRIPT_DATA/user_completion" ]; then
+    for comp in "$SCRIPT_DATA/user_completion/"*; do
+        if [[ "$comp" != *.md ]]; then
+            . "$comp"
+        fi
+    done
+fi

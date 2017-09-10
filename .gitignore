@@ -8,4 +8,12 @@ archived/
 user/*
 !user/*.example
 
+!user/user_path
+user/user_path/*
+!user/user_path/README.md
+
+!user/user_completion
+user/user_completion/*
+!user/user_completion/README.md
+
 *.pyc

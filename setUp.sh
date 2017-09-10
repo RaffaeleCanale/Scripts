@@ -14,8 +14,8 @@ EOF
 }
 
 function declareConstants() {
-    readonly COMPILED_PATH_DIR="./path.c"
-    readonly CONFIG_FILE="./user/config.properties"
+    $1 COMPILED_PATH_DIR "./path.c"
+    $1 CONFIG_FILE "./user/config.properties"
 }
 
 function loadOptions() {
@@ -47,11 +47,25 @@ function compileScripts() {
 
 
     for script in "./path/"*; do
-        compiled="$COMPILED_PATH_DIR/$(basename "$script")"
-
-        cat "$script" | $applyProperties "$CONFIG_FILE" > "$compiled"
-        chmod +x "$compiled"
+        _compileScript "$script"
     done
+
+    if [ -d "./user/user_path" ]; then
+        for script in "./user/user_path/"*; do
+            if [[ "$script" != *.md ]]; then
+                _compileScript "$script"
+            fi
+        done
+    fi
+}
+
+function _compileScript() {
+    local script="$1"
+
+    compiled="$COMPILED_PATH_DIR/$(basename "$script")"
+
+    cat "$script" | $applyProperties "$CONFIG_FILE" > "$compiled"
+    chmod +x "$compiled"
 }
 
 function installNpmModules() {
