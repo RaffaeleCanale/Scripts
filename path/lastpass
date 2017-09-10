@@ -78,10 +78,10 @@ function query() {
         done
         exit 1
     else
-        echo "Copied password for $names"
         if $useStdout; then
             echo "$passwords"
         else
+            echo "Copied password for $names"
             echo "$passwords" | xargs echo -n | xclip -sel clip
         fi
     fi
