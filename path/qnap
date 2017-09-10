@@ -89,10 +89,8 @@ function loadOptions() {
     getOpt "-u" qnapUser 1 "admin"
     getOpt "-i" invalidate
 
-    declare -ag lastpassQnapQuery
-    lastpassQnapQuery=("qnap" "login" "$qnapUser")
-
     # Init parameters
+    lastpassQnapQuery="qnap login $qnapUser"
     sid=""
     share_password=""
     share_address=""
@@ -134,9 +132,8 @@ function _isIp() {
 function _requireSharePassword() {
     if [ -z "$share_password" ]; then
         if $loadFromLastpass; then
-            echo ${lastpassQnapQuery[@]}
-            lastpass "${lastpassQnapQuery[@]}" || error "Failed to load password"
-            share_password="$(xclip -sel clip -o)"
+            share_password=`lastpass --stdout "$lastpassQnapQuery"` || error "Failed to load password"
+            # share_password="$(xclip -sel clip -o)"
         else
             inputPassword share_password "Input share password: "
         fi
@@ -145,6 +142,7 @@ function _requireSharePassword() {
 
 function _doMount() {
     echo $share_address
+    _requireSharePassword
     mountCifs "$share_address" "$share_directory" "$qnapUser" "$share_password" || error "Failed to mount"
 }
 
