@@ -179,7 +179,7 @@ function getFreshFile() {
     local _i=1
     while [ -f "$_result" ]; do
         _i=$((_i+1))
-        _result="${filename}_$_i$extension"
+        _result="$(dirname "$2")/${filename}_$_i$extension"
     done
 
     eval "$1=\"$_result\""
