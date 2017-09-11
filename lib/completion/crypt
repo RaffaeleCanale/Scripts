@@ -4,12 +4,12 @@ __crypt()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    local modes="encrypt decrypt edit"
+    local modes="encrypt decrypt edit view"
 
     if [ $COMP_CWORD -eq 1 ]; then
         COMPREPLY=( $(compgen -W "${modes}" -- ${cur}) )
     elif [[ "$cur" == -* ]]; then
-        COMPREPLY=( $(compgen -W "-o --output --stdout" -- ${cur}) )
+        COMPREPLY=( $(compgen -W "-o --output --stdout --open-with" -- ${cur}) )
     else
         COMPREPLY=( $(compgen -f  -- "${cur}" ) )
     fi

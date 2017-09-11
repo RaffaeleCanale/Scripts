@@ -12,11 +12,14 @@ function printHelp() {
             `echoBlue decrypt` : Decrypt the given file (must be a .gpg file)
             `echoBlue edit`    : Decrypt the given file into a temporary location and opens it with the
                       default application. Then, if the temporary file is modified, the file is re-encrypted.
+            `echoBlue view`    : Decrypt the given file into a temporary location and view it with the
+                    default application.
 
         `echoBlue target`: File to  encrypt/decrypt
 
             `echoViolet "-o|--output"`: output file (otherwise a default name is selected)
             `echoViolet "--stdout"`   : (only for decrypt) Outputs the content to stdout instead of a file
+            `echoViolet "--open-with"`: (only for edit|view) Command to use to open the file (default is 'xdg-open')
 
 EOF
 }
@@ -31,6 +34,7 @@ function loadOptions() {
     # TODO Allow to pass password from stdin
     READONLY=false getOpt "--stdout" useStdout
     READONLY=false getOpt "-o|--output" output 1 ""
+    getOpt "--open-with" openWith 1 "xdg-open"
     return 0
 }
 
@@ -69,6 +73,15 @@ function decrypt() {
     eval "gpg2 $options \"$inputFile\" <<< \"$password\" 2> /dev/null || error \"Wrong password\""
 }
 
+function view() {
+    local tmpFile
+
+    createTmpFile tmpFile
+    output="$tmpFile" useStdout=false decrypt
+
+    $openWith "$tmpFile"
+}
+
 function edit() {
     local tmpFile
     local tmpTimestamp
@@ -78,10 +91,10 @@ function edit() {
     createTmpFile tmpFile
     output="$tmpFile" useStdout=false decrypt
 
-    local tmpTimestamp=`date -r "$tmpFile" +%s`
-    xdg-open "$tmpFile"
+    tmpTimestamp=`date -r "$tmpFile" +%s`
+    $openWith "$tmpFile"
 
-    local newTimestamp=`date -r "$tmpFile" +%s`
+    newTimestamp=`date -r "$tmpFile" +%s`
     if [ $tmpTimestamp -eq $newTimestamp ]; then
         inputChar _ "Press any key to save changes (if any)"
     fi
@@ -97,8 +110,8 @@ function edit() {
 function run () {
     READONLY=false getArg mode,inputFile
 
-    if ! [[ "$mode" =~ ^(encrypt|decrypt|edit)$ ]]; then
-        error "Mode must be one of: encrypt, decrypt or edit"
+    if ! [[ "$mode" =~ ^(encrypt|decrypt|edit|view)$ ]]; then
+        error "Mode must be one of: encrypt, decrypt, view or edit"
     fi
     test -f "$inputFile" || error "Input file does not exist"
 
