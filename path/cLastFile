@@ -123,7 +123,7 @@ function run() {
 #       2: Index 0-based
 #
 function performAction() {
-    local target="$targetDirectory/$1"
+    local target="$1"
 
     if $act_copy; then
         cp "$target" "$outputDir" || error "Couldn't copy to $outputDir:\n$target"
