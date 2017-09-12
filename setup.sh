@@ -82,12 +82,25 @@ function installNpmModules() {
     done
 }
 
+function runSetupScripts() {
+    local path="./lib/setup"
+
+    if [ -d "$path" ]; then
+        for script in "$path/"*; do
+            if [[ "$script" != *.md ]]; then
+                . "$script"
+            fi
+        done
+    fi
+}
+
 function run() {
     set +o nounset
 
     exportBashrc
     compileScripts
     installNpmModules
+    runSetupScripts
 }
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"
