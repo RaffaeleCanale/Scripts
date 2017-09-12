@@ -1,0 +1,110 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Install favorite Atom packages and keymap
+
+    `echoGreen Usage:` ${PROGNAME} `echoViolet --backup`
+
+        `echoBlue --backup`: Backup the Atom keymap to the user directory
+EOF
+}
+
+function declareConstants() {
+    $1 ATOM_PACKAGES "$SCRIPT_DATA/atom_settings/packages"
+    $1 GIT_PACKAGES_DIRECTORY "$SCRIPT_DATA/atom_settings/.git_packages"
+    $1 ATOM_KEYMAP_BACKUP "$SCRIPT_DATA/atom_settings/keymap.cson"
+    $1 ATOM_KEYMAP "$HOME/.atom/keymap.cson"
+    return 0
+}
+
+
+function loadOptions() {
+    # unusedBehaviour="IGNORE"
+    getOpt "--backup" backupKeymap
+    return 0
+}
+
+function _isInstalled() {
+    echo "$installed_packages" | grep -P "^$1@\d+\.\d+\.\d+$" > /dev/null
+}
+
+function _installGitPackage() {
+    local split
+    local name
+    local url
+
+
+    test -d "$GIT_PACKAGES_DIRECTORY" || mkdir "$GIT_PACKAGES_DIRECTORY" || error "Cannot create directory: $GIT_PACKAGES_DIRECTORY"
+    pushd "$GIT_PACKAGES_DIRECTORY"
+
+    IFS='?' read -r -a split <<< "$1"
+    url="${split[0]}"
+
+    if [ ${#split[@]} -eq 1 ]; then
+        git clone --single-branch "$url"
+    else
+        local branch="${split[1]}"
+        git clone -b "$branch" --single-branch "$url"
+    fi
+
+    name=`basename "$url" .git`
+
+    cd "$name" || error "Cloned directory not found: $GIT_PACKAGES_DIRECTORY/$name"
+
+    npm install
+    apm link
+
+    popd
+}
+
+function installPackages() {
+    local installed_packages=`apm list --bare --installed --packages`
+
+    for package in "${COMMUNITY_PACKAGES[@]}"; do
+        if _isInstalled "$package"; then
+            verbose "Atom package already installed: $package"
+        else
+            apm install "$package"
+        fi
+    done
+
+    for package in "${!GIT_PACKAGES[@]}"; do
+        if _isInstalled "$package"; then
+            verbose "Atom package already installed: $package"
+            # TODO Update package?
+        else
+            _installGitPackage "${GIT_PACKAGES[$package]}"
+        fi
+    done
+}
+
+function copyKeymap() {
+    if [ -f "$ATOM_KEYMAP_BACKUP" ]; then
+        verbose "Updating keymap"
+        cp "$ATOM_KEYMAP_BACKUP" "$ATOM_KEYMAP"
+    else
+        echoYellow "Keymap file not found: $ATOM_KEYMAP_BACKUP"
+    fi
+}
+
+function run () {
+    if $backupKeymap; then
+        cp "$ATOM_KEYMAP" "$ATOM_KEYMAP_BACKUP" -v
+        return
+    fi
+
+    which apm > /dev/null || error "apm is not installed"
+
+    if [ -f "$ATOM_PACKAGES" ]; then
+        source "$ATOM_PACKAGES"
+        installPackages
+    else
+        echoYellow "Packages file not found"
+    fi
+
+    copyKeymap
+}
+
+source "$SCRIPT_LIB/scriptStarter"
