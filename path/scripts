@@ -8,10 +8,9 @@ function printHelp() {
     `echoGreen Usage:` ${PROGNAME} `echoBlue "[action] [target]"` `echoViolet [OPTIONS]`
 
         `echoBlue action`
-            `echoBlue pull` : Pull the latest changes
+            `echoBlue pull`  : Pull the latest changes
             `echoBlue setup` : Run the setup script
-            `echoBlue create` : Create a new script in the path directory
-
+            `echoBlue create`: Create a new script in the path directory
 
 EOF
 }
@@ -22,7 +21,7 @@ function declareConstants() {
 
 
 function loadOptions() {
-    # unusedBehaviour="IGNORE"
+    unusedBehaviour="IGNORE"
     # TODO Allow to pass password from stdin
     READONLY=false getOpt "--stdout" useStdout
     READONLY=false getOpt "-o|--output" output 1 ""
@@ -40,7 +39,14 @@ function pull() {
 }
 
 function setup() {
-    ./setup.sh
+    if [ $# -gt 0 ]; then
+        local script="$1"
+        shift
+
+        . "$SCRIPT_LIB/setup/$script" "$@"
+    else
+        ./setup.sh
+    fi
 }
 
 
@@ -52,6 +58,7 @@ function run () {
         error "Mode must be one of: pull,setup or create"
     fi
 
+    shift
     $action "$@"
 }
 

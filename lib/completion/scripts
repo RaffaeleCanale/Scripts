@@ -8,6 +8,8 @@ __scripts()
 
     if [ $COMP_CWORD -eq 1 ]; then
         COMPREPLY=( $(compgen -W "${modes}" -- ${cur}) )
+    elif [ "$prev" == "setup" ]; then
+        COMPREPLY=( $(compgen -W "`ls "$SCRIPT_LIB/setup/" -I README.md`" -- ${cur}) )
     # elif [[ "$cur" == -* ]]; then
     #     COMPREPLY=( $(compgen -W "-o --output --stdout --open-with" -- ${cur}) )
     else
