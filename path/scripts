@@ -1,0 +1,58 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Manage scripts
+
+    `echoGreen Usage:` ${PROGNAME} `echoBlue "[action] [target]"` `echoViolet [OPTIONS]`
+
+        `echoBlue action`
+            `echoBlue pull` : Pull the latest changes
+            `echoBlue setup` : Run the setup script
+            `echoBlue create` : Create a new script in the path directory
+
+
+EOF
+}
+
+function declareConstants() {
+    return 0
+}
+
+
+function loadOptions() {
+    # unusedBehaviour="IGNORE"
+    # TODO Allow to pass password from stdin
+    READONLY=false getOpt "--stdout" useStdout
+    READONLY=false getOpt "-o|--output" output 1 ""
+    getOpt "--open-with" openWith 1 "xdg-open"
+    return 0
+}
+
+
+function create() {
+    error "Not implemented yet"
+}
+
+function pull() {
+    git pull
+}
+
+function setup() {
+    ./setup.sh
+}
+
+
+function run () {
+    cd "$SCRIPT_LIB/.."
+
+    getArg action
+    if ! [[ "$action" =~ ^(pull|setup|create)$ ]]; then
+        error "Mode must be one of: pull,setup or create"
+    fi
+
+    $action "$@"
+}
+
+source "$SCRIPT_LIB/scriptStarter"

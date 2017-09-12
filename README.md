@@ -13,7 +13,7 @@ Rename `user/config.properties.example` to `user/config.properties` and fill the
 
 Then run:
 ```
-./setUp.sh
+./setup.sh
 ```
 **Warning**: This will replace your `.bashrc` file and move the original to `.bashrc.original`
 
