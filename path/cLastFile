@@ -156,7 +156,7 @@ function performAction() {
 
 
 function listFiles() {
-    ls -t "$targetDirectory"* | head -$count
+    ls -t -d -1 "${targetDirectory}/"* | head -$count
 }
 
 
