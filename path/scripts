@@ -11,6 +11,7 @@ function printHelp() {
             `echoBlue pull`  : Pull the latest changes
             `echoBlue setup` : Run the setup script
             `echoBlue create`: Create a new script in the path directory
+            `echoBlue user`  : Open a user config file
 
 EOF
 }
@@ -49,13 +50,24 @@ function setup() {
     fi
 }
 
+function config() {
+    if [ $# -eq 0 ]; then
+        target="config.properties"
+    else
+        target="$1"
+    fi
+
+    target="${SCRIPT_DATA}/$target"
+    test -f "$target" || error "File not found: $target"
+    xdg-open "$target"
+}
 
 function run () {
     cd "$SCRIPT_LIB/.."
 
     getArg action
-    if ! [[ "$action" =~ ^(pull|setup|create)$ ]]; then
-        error "Mode must be one of: pull,setup or create"
+    if ! [[ "$action" =~ ^(pull|setup|create|user)$ ]]; then
+        error "Mode must be one of: pull,setup, user or create"
     fi
 
     shift
