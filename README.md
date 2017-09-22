@@ -32,7 +32,14 @@ Add LaTex templates
 
 **leds**: Ensure that `leds blink` restores the initial status of the led
 
-**workspace**: Applying a workspace twice will shuffle order of windows of the same type
+**workspace**: 
+
+Bugs: 
+- Applying a workspace twice will shuffle order of windows of the same type
+
+Improvements:
+- Add more default workspace layouts in config
+- Add custom layout depending on the screen count
 
 **other**: ability to add and sync computer-dependent scripts and aliases (eg: stack scripts, ssh-add on startup, ...)
 
