@@ -471,6 +471,9 @@ function _processArgs() {
         --help|-h   :   Display this help
         --verbose|-v:   Print more information on the process
 
+    Environment variables:
+        `FIRST=true declareConstants printConstant`
+
 EOF
             exit 0
 
@@ -509,6 +512,15 @@ function setConstant() {
         eval "${ro}$1=\"$2\""
     else
         eval "${ro}$1=\"\$$1\""
+    fi
+}
+
+function printConstant() {
+    if $FIRST; then
+        echo -n "$1"
+        FIRST=false
+    else
+        echo -n ", $1"
     fi
 }
 
