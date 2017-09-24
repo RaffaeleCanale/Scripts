@@ -50,7 +50,7 @@ function setup() {
     fi
 }
 
-function config() {
+function user() {
     if [ $# -eq 0 ]; then
         target="config.properties"
     else
