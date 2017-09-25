@@ -45,3 +45,4 @@ Improvements:
 - ability to add and sync computer-dependent scripts and aliases (eg: stack scripts, ssh-add on startup, ...)
 - add 'export' to normalize script
 - import, install and add to path external projects
+- add script to change KDE background + combine it with Image of the day
