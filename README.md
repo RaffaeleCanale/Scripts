@@ -41,6 +41,7 @@ Improvements:
 - Add more default workspace layouts in config
 - Add custom layout depending on the screen count
 
-**other**: ability to add and sync computer-dependent scripts and aliases (eg: stack scripts, ssh-add on startup, ...)
-
-**other**: add 'export' to normalize scripts
+**other**: 
+- ability to add and sync computer-dependent scripts and aliases (eg: stack scripts, ssh-add on startup, ...)
+- add 'export' to normalize script
+- import, install and add to path external projects
