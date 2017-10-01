@@ -44,7 +44,7 @@ function setup() {
         local script="$1"
         shift
 
-        . "$SCRIPT_LIB/setup/$script" "$@"
+        . "$SCRIPT_LIB/setup.c/$script" "$@"
     else
         ./setup.sh
     fi

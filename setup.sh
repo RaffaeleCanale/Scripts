@@ -14,7 +14,6 @@ EOF
 }
 
 function declareConstants() {
-    $1 COMPILED_PATH_DIR "./path.c"
     $1 CONFIG_FILE "./user/config.properties"
 }
 
@@ -40,35 +39,25 @@ function exportBashrc() {
 }
 
 function compileScripts() {
-    applyProperties="./path/applyProperties" # Uncompiled version
+    local src="$1"
+    local dst="$2"
+    local applyProperties="./path/applyProperties" # Uncompiled version
 
-    test -d "$COMPILED_PATH_DIR" || mkdir "$COMPILED_PATH_DIR" || error "Failed to create $COMPILED_PATH_DIR"
-    test -f "$CONFIG_FILE" || error "Config file $CONFIG_FILE not found"
 
+    test -d "$dst" || mkdir "$dst" || error "Failed to create $dst"
 
-    for script in "./path/"*; do
-        _compileScript "$script"
+    for script in "$src/"*; do
+        if [[ "$script" != *.md ]]; then
+            compiled="$dst/$(basename "$script")"
+
+            cat "$script" | $applyProperties "$CONFIG_FILE" > "$compiled"
+            chmod +x "$compiled"
+        fi
     done
-
-    if [ -d "./user/user_path" ]; then
-        for script in "./user/user_path/"*; do
-            if [[ "$script" != *.md ]]; then
-                _compileScript "$script"
-            fi
-        done
-    fi
-}
-
-function _compileScript() {
-    local script="$1"
-
-    compiled="$COMPILED_PATH_DIR/$(basename "$script")"
-
-    cat "$script" | $applyProperties "$CONFIG_FILE" > "$compiled"
-    chmod +x "$compiled"
 }
 
 function installNpmModules() {
+    # TODO Get rid of this eventually
     for module in "./lib/modules/"*; do
         pushd $module > /dev/null
 
@@ -83,7 +72,7 @@ function installNpmModules() {
 }
 
 function runSetupScripts() {
-    local path="./lib/setup"
+    local path="./lib/setup.c"
 
     if [ -d "$path" ]; then
         for script in "$path/"*; do
@@ -97,8 +86,14 @@ function runSetupScripts() {
 function run() {
     set +o nounset
 
+    test -f "$CONFIG_FILE" || error "Config file $CONFIG_FILE not found"
+
     exportBashrc
-    compileScripts
+    compileScripts "./lib/setup" "./lib/setup.c"
+    compileScripts "./path" "./path.c"
+    if [ -d "./user/user_path" ]; then
+        compileScripts "./user/user_path" "./path.c"
+    fi
     installNpmModules
     runSetupScripts
 }

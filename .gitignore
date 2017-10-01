@@ -2,6 +2,7 @@ node_modules
 .directory
 
 path.c/
+lib/setup.c/
 progress/
 archived/
 

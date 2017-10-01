@@ -9,7 +9,7 @@ __scripts()
     if [ $COMP_CWORD -eq 1 ]; then
         COMPREPLY=( $(compgen -W "${modes}" -- ${cur}) )
     elif [ "$prev" == "setup" ]; then
-        COMPREPLY=( $(compgen -W "`ls "$SCRIPT_LIB/setup/" -I README.md`" -- ${cur}) )
+        COMPREPLY=( $(compgen -W "`ls "$SCRIPT_LIB/setup.c/" -I README.md`" -- ${cur}) )
     elif [ "$prev" == "user" ]; then
         cd "$SCRIPT_DATA"
         COMPREPLY=( $(compgen -f  -- "${cur}" ) )
