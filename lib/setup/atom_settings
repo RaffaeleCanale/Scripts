@@ -37,7 +37,7 @@ function _installGitPackage() {
 
 
     test -d "$GIT_PACKAGES_DIRECTORY" || mkdir "$GIT_PACKAGES_DIRECTORY" || error "Cannot create directory: $GIT_PACKAGES_DIRECTORY"
-    pushd "$GIT_PACKAGES_DIRECTORY"
+    pushd "$GIT_PACKAGES_DIRECTORY" > /dev/null
 
     IFS='?' read -r -a split <<< "$1"
     url="${split[0]}"
@@ -56,7 +56,7 @@ function _installGitPackage() {
     npm install
     apm link
 
-    popd
+    popd > /dev/null
 }
 
 function installPackages() {

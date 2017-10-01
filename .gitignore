@@ -1,6 +1,7 @@
 node_modules
 .directory
 
+launchers
 path.c/
 lib/setup.c/
 progress/

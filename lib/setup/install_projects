@@ -1,0 +1,52 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Install personal projects
+
+    `echoGreen Usage:` ${PROGNAME}
+EOF
+}
+
+function declareConstants() {
+    $1 PROJECTS "$SCRIPT_DATA/projects"
+    $1 PROJECTS_DIRECTORY "__SETUP__.__PROJECTS_DIRECTORY__"
+    return 0
+}
+
+
+function loadOptions() {
+    # unusedBehaviour="IGNORE"
+    return 0
+}
+
+function installProjects() {
+    local gitInstall="$SCRIPT_LIB/modules/install_modules/install_repo"
+
+    test -d "$PROJECTS_DIRECTORY" || mkdir "$PROJECTS_DIRECTORY" || error "Cannot create $PROJECTS_DIRECTORY"
+    pushd "$PROJECTS_DIRECTORY" > /dev/null
+
+    for url in "${GIT_PROJECTS[@]}"; do
+        $gitInstall "$url" "$SCRIPT_LIB/../launchers"
+    done
+
+    popd > /dev/null
+}
+
+function createLauncher() {
+    echo "Imma create a launcher for $1"
+}
+
+function run () {
+
+
+    if [ -f "$PROJECTS" ]; then
+        source "$PROJECTS"
+        installProjects
+    else
+        echoYellow "Projects file not found"
+    fi
+}
+
+source "$SCRIPT_LIB/scriptStarter"

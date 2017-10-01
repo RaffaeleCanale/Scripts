@@ -200,7 +200,7 @@ export SCRIPT_PATH="__PATH__/path.c"
 export SCRIPT_LIB="__PATH__/lib"
 export SCRIPT_DATA="__PATH__/user"
 
-export PATH="$PATH:$SCRIPT_PATH"
+export PATH="$PATH:$SCRIPT_PATH:__PATH__/launchers"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

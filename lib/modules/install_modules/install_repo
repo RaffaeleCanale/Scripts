@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+function error() {
+    echo "$@"
+    exit 1
+}
+
+function sedeasy {
+    sed "s/$(echo $1 | sed -e 's/\([[\/.*]\|\]\)/\\&/g')/$(echo $2 | sed -e 's/[\/&]/\\&/g')/g" $3
+}
+
+function createLauncher {
+    test -d "$DESTINATION" || mkdir "$DESTINATION" || error "Cannot create $DESTINATION"
+
+    sedeasy "__JAR_FILE__" "$2" "$1" > "$DESTINATION/$NAME"
+    chmod +x "$DESTINATION/$NAME"
+}
+
+function isMvnProject() {
+    test -f "pom.xml"
+}
+
+function installMvn() {
+    LAUNCHER="$SCRIPT_LIB/modules/install_modules/launchers/java"
+    test -f create_mvn_local_repo.sh && ./create_mvn_local_repo.sh
+    mvn package || error "Failed to compile project"
+
+    jars=(`ls target/*with-dependencies.jar`) || error "No .jar found in project"
+
+    if [ "${#jars[@]}" -eq 1 ]; then
+        createLauncher "$LAUNCHER" "$(realpath "${jars[@]}")"
+    else
+        jars=(`ls target/*.jar`) || error "No .jar found in project"
+        if [ "${#jars[@]}" -eq 1 ]; then
+            $1 "${jars[@]}"
+        elif [ "${#jars[@]}" -eq 0 ]; then
+            error "No .jar found in project"
+        else
+            error "Too many .jar files found in project"
+        fi
+    fi
+}
+
+function gclonecd() {
+    local dir=`echo "$1" | sed -n -e 's/^.*\/\([^.]*\)\(.git\)*/\1/p'`
+    test -d "$dir" || git clone "$1"
+    cd "$dir"
+}
+
+
+gclonecd "$1" || error "Failed to clone project"
+NAME="$(basename "$PWD")"
+NAME="${NAME,,}"
+DESTINATION="$2"
+
+if isMvnProject; then
+    installMvn
+else
+    error "Unrecognised project type: $PWD"
+fi
