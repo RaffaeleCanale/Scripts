@@ -15,6 +15,13 @@ function createLauncher {
     chmod +x "$DESTINATION/$NAME"
 }
 
+function sync() {
+    jsync init
+    jsync remote gdrive "$SYNC_DIR/$PROJECT_NAME" && \
+            jsync copy-filters && \ 
+            jsync sync
+}
+
 function isMvnProject() {
     test -f "pom.xml"
 }
@@ -28,6 +35,9 @@ function installMvn() {
 
     if [ "${#jars[@]}" -eq 1 ]; then
         createLauncher "$LAUNCHER" "$(realpath "${jars[@]}")"
+        if [ -n "$SYNC_DIR" ]; then
+            sync
+        fi
     else
         jars=(`ls target/*.jar`) || error "No .jar found in project"
         if [ "${#jars[@]}" -eq 1 ]; then
@@ -48,9 +58,10 @@ function gclonecd() {
 
 
 gclonecd "$1" || error "Failed to clone project"
-NAME="$(basename "$PWD")"
-NAME="${NAME,,}"
+PROJECT_NAME="$(basename "$PWD")"
+NAME="${PROJECT_NAME,,}"
 DESTINATION="$2"
+SYNC_DIR="$3"
 
 if isMvnProject; then
     installMvn

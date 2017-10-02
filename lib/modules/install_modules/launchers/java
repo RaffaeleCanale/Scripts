@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+readonly jarFile="__JAR_FILE__"
+
+if [ ! -f "$jarFile" ]; then
+    echo "Jar file not found: $jarFile"
+    exit 1
+fi
+
+java -jar "$jarFile" "$@"

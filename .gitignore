@@ -19,3 +19,5 @@ user/user_completion/*
 !user/user_completion/README.md
 
 *.pyc
+
+!lib/modules/install_modules/launchers

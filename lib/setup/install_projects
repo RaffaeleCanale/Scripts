@@ -12,6 +12,7 @@ EOF
 function declareConstants() {
     $1 PROJECTS "$SCRIPT_DATA/projects"
     $1 PROJECTS_DIRECTORY "__SETUP__.__PROJECTS_DIRECTORY__"
+    $1 DRIVE_SYNC_DIRECTORY "__SETUP__.__DRIVE_SYNC_DIRECTORY__"
     return 0
 }
 
@@ -28,14 +29,10 @@ function installProjects() {
     pushd "$PROJECTS_DIRECTORY" > /dev/null
 
     for url in "${GIT_PROJECTS[@]}"; do
-        $gitInstall "$url" "$SCRIPT_LIB/../launchers"
+        $gitInstall "$url" "$SCRIPT_LIB/../launchers" "$DRIVE_SYNC_DIRECTORY"
     done
 
     popd > /dev/null
-}
-
-function createLauncher() {
-    echo "Imma create a launcher for $1"
 }
 
 function run () {
