@@ -13,7 +13,7 @@ EOF
 
 function declareConstants() {
     $1 ATOM_PACKAGES "$SCRIPT_DATA/atom_settings/packages"
-    $1 GIT_PACKAGES_DIRECTORY "$SCRIPT_DATA/atom_settings/.git_packages"
+    $1 GIT_PACKAGES_DIRECTORY "$SCRIPT_LIB/bin/.git_packages"
     $1 ATOM_KEYMAP_BACKUP "$SCRIPT_DATA/atom_settings/keymap.cson"
     $1 ATOM_KEYMAP "$HOME/.atom/keymap.cson"
     return 0
@@ -36,7 +36,7 @@ function _installGitPackage() {
     local url
 
 
-    test -d "$GIT_PACKAGES_DIRECTORY" || mkdir "$GIT_PACKAGES_DIRECTORY" || error "Cannot create directory: $GIT_PACKAGES_DIRECTORY"
+    test -d "$GIT_PACKAGES_DIRECTORY" || mkdir --parents "$GIT_PACKAGES_DIRECTORY" || error "Cannot create directory: $GIT_PACKAGES_DIRECTORY"
     pushd "$GIT_PACKAGES_DIRECTORY" > /dev/null
 
     IFS='?' read -r -a split <<< "$1"

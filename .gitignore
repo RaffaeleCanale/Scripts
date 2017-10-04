@@ -21,3 +21,5 @@ user/user_completion/*
 *.pyc
 
 !lib/modules/install_modules/launchers
+.jsync
+lib/bin
