@@ -17,6 +17,7 @@ EOF
 }
 
 function declareConstants() {
+    $1 EDITOR "xdg-open"
     return 0
 }
 
@@ -26,7 +27,6 @@ function loadOptions() {
     # TODO Allow to pass password from stdin
     READONLY=false getOpt "--stdout" useStdout
     READONLY=false getOpt "-o|--output" output 1 ""
-    getOpt "--open-with" openWith 1 "xdg-open"
     return 0
 }
 
@@ -59,7 +59,7 @@ function user() {
 
     target="${SCRIPT_DATA}/$target"
     test -f "$target" || error "File not found: $target"
-    xdg-open "$target"
+    $EDITOR "$target"
 }
 
 function run () {
