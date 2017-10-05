@@ -37,6 +37,9 @@ function create() {
 
 function pull() {
     git pull
+    if [ -d .jsync ]; then
+        jsync sync
+    fi
 }
 
 function setup() {

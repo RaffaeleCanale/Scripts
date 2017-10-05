@@ -29,7 +29,7 @@ function installProjects() {
     pushd "$PROJECTS_DIRECTORY" > /dev/null
 
     for url in "${GIT_PROJECTS[@]}"; do
-        $gitInstall "$url" "$SCRIPT_LIB/../launchers" "$DRIVE_SYNC_DIRECTORY"
+        $gitInstall "$url" "$PROJECTS_DIRECTORY"
     done
 
     popd > /dev/null

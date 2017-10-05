@@ -4,67 +4,47 @@ function error() {
     exit 1
 }
 
-function sedeasy {
-    sed "s/$(echo $1 | sed -e 's/\([[\/.*]\|\]\)/\\&/g')/$(echo $2 | sed -e 's/[\/&]/\\&/g')/g" $3
+
+
+
+# function gclonecd() {
+#     local dir=`echo "$1" | sed -n -e 's/^.*\/\([^.]*\)\(.git\)*/\1/p'`
+#     test -d "$dir" || git clone "$1"
+#     cd "$dir"
+# }
+
+function projectName() {
+    echo "$1" | sed -n -e 's/^.*\/\([^.]*\)\(.git\)*/\1/p'
 }
 
-function createLauncher {
-    test -d "$DESTINATION" || mkdir "$DESTINATION" || error "Cannot create $DESTINATION"
+test $# -eq 2 || error "Usage: install_repo <git_url> <destination>"
 
-    sedeasy "__JAR_FILE__" "$2" "$1" > "$DESTINATION/$NAME"
-    chmod +x "$DESTINATION/$NAME"
-}
-
-function sync() {
-    jsync init
-    jsync remote gdrive "$SYNC_DIR/$PROJECT_NAME" && \
-            jsync copy-filters && \ 
-            jsync sync
-}
-
-function isMvnProject() {
-    test -f "pom.xml"
-}
-
-function installMvn() {
-    LAUNCHER="$SCRIPT_LIB/modules/install_modules/launchers/java"
-    test -f create_mvn_local_repo.sh && ./create_mvn_local_repo.sh
-    mvn package || error "Failed to compile project"
-
-    jars=(`ls target/*with-dependencies.jar`) || error "No .jar found in project"
-
-    if [ "${#jars[@]}" -eq 1 ]; then
-        createLauncher "$LAUNCHER" "$(realpath "${jars[@]}")"
-        if [ -n "$SYNC_DIR" ]; then
-            sync
-        fi
-    else
-        jars=(`ls target/*.jar`) || error "No .jar found in project"
-        if [ "${#jars[@]}" -eq 1 ]; then
-            $1 "${jars[@]}"
-        elif [ "${#jars[@]}" -eq 0 ]; then
-            error "No .jar found in project"
-        else
-            error "Too many .jar files found in project"
-        fi
-    fi
-}
-
-function gclonecd() {
-    local dir=`echo "$1" | sed -n -e 's/^.*\/\([^.]*\)\(.git\)*/\1/p'`
-    test -d "$dir" || git clone "$1"
-    cd "$dir"
-}
-
-
-gclonecd "$1" || error "Failed to clone project"
-PROJECT_NAME="$(basename "$PWD")"
-NAME="${PROJECT_NAME,,}"
+GIT_URL="$1"
 DESTINATION="$2"
-SYNC_DIR="$3"
+PROJECT_NAME="$(projectName "$1")"
 
-if isMvnProject; then
-    installMvn
+if [ -d "$DESTINATION/$PROJECT_NAME" ]; then
+    pushd "$DESTINATION/$PROJECT_NAME" > /dev/null
+    git pull
 else
-    error "Unrecognised project type: $PWD"
+    git clone "$GIT_URL" "$DESTINATION/$PROJECT_NAME"
+    pushd "$DESTINATION/$PROJECT_NAME" > /dev/null
 fi
+
+if [ -d ".jsync" ]; then
+    jsync sync
+fi
+
+for installer in "$SCRIPT_LIB/modules/install_modules/installers/"*; do
+    if $installer isCompatible; then
+        test -d "$SCRIPT_LAUNCHER" || mkdir "$SCRIPT_LAUNCHER" || error "Cannot create $SCRIPT_LAUNCHER"
+
+        PROJECT_NAME="$PROJECT_NAME" $installer install || error "Failed to compile project"
+        PROJECT_NAME="$PROJECT_NAME" $installer copyToBin || error
+        PROJECT_NAME="$PROJECT_NAME" $installer createLauncher || error
+
+        exit 0
+    fi
+done
+
+error "Unrecognised project type: $PWD"

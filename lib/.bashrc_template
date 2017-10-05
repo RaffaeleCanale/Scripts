@@ -199,8 +199,8 @@ export PS1="\$(last_cmd_status) \W\[\033[33m\]\$(parse_git_branch)\[\033[00m\]\n
 export SCRIPT_PATH="__PATH__/path.c"
 export SCRIPT_LIB="__PATH__/lib"
 export SCRIPT_DATA="__PATH__/user"
-
-export PATH="$PATH:$SCRIPT_PATH:__PATH__/launchers"
+export SCRIPT_LAUNCHER="__PATH__/launchers"
+export PATH="$PATH:$SCRIPT_PATH:$SCRIPT_LAUNCHER"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
