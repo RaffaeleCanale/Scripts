@@ -4,12 +4,24 @@ function isCompatible() {
 }
 
 function install() {
-    test -f create_mvn_local_repo.sh && ./create_mvn_local_repo.sh || return 1
+    local bin
+    local jar
+
+    bin="${SCRIPT_LIB}/bin/${PROJECT_NAME}.jar"
+    jar="$(_getJar)"
+
+    if [ $? -eq 0 ] && [ -f "$bin" ] && [ -f "$jar" ]; then
+        if [ "$(md5sum "$bin" | cut -d ' ' -f 1)" == "$(md5sum "$jar" | cut -d ' ' -f 1)" ]; then
+            return 0
+        fi
+    fi
+
     mvn package
 }
 
 function copyToBin() {
-    . "$SCRIPT_LIB/copyToBin" "$(_getJar)" "${PROJECT_NAME}.jar"
+    local jar="$(_getJar)" || return 1
+    . "$SCRIPT_LIB/copyToBin" "$jar" "${PROJECT_NAME}.jar"
 }
 
 function createLauncher {
@@ -17,7 +29,7 @@ function createLauncher {
     local launcher="${SCRIPT_LIB}/modules/install_modules/launchers/java"
 
     _sedeasy "__JAR_FILE__" "$bin" "$launcher" > "$SCRIPT_LAUNCHER/${PROJECT_NAME,,}"
-    chmod +x "$SCRIPT_LAUNCHER/$PROJECT_NAME"
+    chmod +x "$SCRIPT_LAUNCHER/${PROJECT_NAME,,}"
 }
 
 function _sedeasy {
@@ -25,18 +37,18 @@ function _sedeasy {
 }
 
 function _getJar() {
-    jars=(`ls target/*with-dependencies.jar`) || error "No .jar found in project"
+    jars=(`ls target/*with-dependencies.jar`) || return 1
 
     if [ "${#jars[@]}" -eq 1 ]; then
         realpath "${jars[@]}"
     else
-        jars=(`ls target/*.jar`) || error "No .jar found in project"
+        jars=(`ls target/*.jar`) || return 1
         if [ "${#jars[@]}" -eq 1 ]; then
-            realpath "${jars[@]}"
+            realpath "${jars}"
         elif [ "${#jars[@]}" -eq 0 ]; then
-            error "No .jar found in project"
+            return 1
         else
-            error "Too many .jar files found in project"
+            return 1
         fi
     fi
 }

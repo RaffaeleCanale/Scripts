@@ -1,4 +1,6 @@
 #!/bin/bash
+# TODO Add custom build.sh script
+# TODO Add bash_completion file
 
 function printHelp() {
     cat << EOF

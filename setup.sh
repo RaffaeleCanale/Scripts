@@ -27,6 +27,7 @@ function sedeasy {
 }
 
 function exportBashrc() {
+    # TODO Allow to keep user .bashrc and only add core scripts
     bashrcFile="./lib/.bashrc_template"
 
     test -f "$bashrcFile" || error "$bashrcFile file not found"
@@ -83,11 +84,37 @@ function runSetupScripts() {
     fi
 }
 
+function setupJsync() {
+    if [ ! -d ".jsync" ]; then
+        input gdrive_dir "Name of the Google Drive directory: " true
+
+        # TODO Add multi command to jsync
+        # TODO Add whitelist/blacklist to init
+        java -jar "./lib/JSync.jar" init
+        java -jar "./lib/JSync.jar" remote gdrive "$gdrive_dir"
+        java -jar "./lib/JSync.jar" copy-filters
+    fi
+}
+
 function run() {
     set +o nounset
 
-    test -f "$CONFIG_FILE" || error "Config file $CONFIG_FILE not found"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echoYellow "Config file $CONFIG_FILE not found"
+        if inputYesNo "Use JSync to import settings from Google Drive?"; then
+            setupJsync || error
+        else
+            error "Config file $CONFIG_FILE not found"
+        fi
+    fi
 
+    if [ -d ".jsync" ]; then
+        java -jar "./lib/JSync.jar" sync
+    fi
+
+    test -f "$CONFIG_FILE" || error
+
+    # TODO Add logging system
     exportBashrc
     compileScripts "./lib/setup" "./lib/setup.c"
     compileScripts "./path" "./path.c"
