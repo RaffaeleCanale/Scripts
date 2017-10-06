@@ -32,17 +32,18 @@ Add LaTex templates
 
 **leds**: Ensure that `leds blink` restores the initial status of the led
 
-**workspace**: 
+**workspace**:
 
-Bugs: 
+Bugs:
 - Applying a workspace twice will shuffle order of windows of the same type
 
 Improvements:
 - Add more default workspace layouts in config
 - Add custom layout depending on the screen count
 
-**other**: 
+**other**:
 - ability to add and sync computer-dependent scripts and aliases (eg: stack scripts, ssh-add on startup, ...)
 - add 'export' to normalize script
 - import, install and add to path external projects
 - add script to change KDE background + combine it with Image of the day
+- add script template
