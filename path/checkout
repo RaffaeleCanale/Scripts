@@ -1,0 +1,77 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Checkout (or create) a branch while keeping current changes
+
+    `echoGreen Usage:` ${PROGNAME} `echoBlue "<branch>"` `echoViolet "--base-branch <base-branch>"`
+
+        `echoBlue branch`: Branch to checkout or create
+
+        `echoViolet "--base-branch"`: Branch to base of in case the new branch needs to be created
+EOF
+}
+
+function declareConstants() {
+    return 0
+}
+
+function loadOptions() {
+	# unusedBehaviour="IGNORE"
+    getOpt "--base-branch" masterBranch 1 "master"
+}
+
+function parseGitBranch() {
+     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
+function branchExists() {
+    git rev-parse --verify "$1" 2> /dev/null
+}
+
+function hasChanges() {
+    local changes="$(git status --porcelain)"
+    if [ -z "$changes" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+function lastLogMessage() {
+    git log -1 --oneline | cut -d ' ' -f2-
+}
+
+function run () {
+    getArg branch
+    local currentBranch="$(parseGitBranch)"
+
+    if [ "$branch" == "$currentBranch" ]; then
+        return 0
+    fi
+
+    if hasChanges; then
+        git add -A
+        git commit -m "wip"
+    fi
+
+    if branchExists "$branch"; then
+        git checkout "$branch"
+
+        if [[ "$(lastLogMessage)" == *"wip" ]]; then
+            git reset HEAD~1
+        fi
+
+    else
+        if [ "$currentBranch" != "$masterBranch" ]; then
+            git checkout "$masterBranch"
+        fi
+
+        git pull
+
+        git checkout -b "$branch"
+    fi
+}
+
+source "$SCRIPT_LIB/scriptStarter"
