@@ -1,0 +1,34 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Suspends this machine after a command finishes.
+
+    `echoGreen Usage:` ${PROGNAME} `echoBlue [command]`
+
+        `echoBlue command`: Command to run before suspending
+EOF
+}
+
+function declareConstants() {
+    return 0
+}
+
+function loadOptions() {
+    unusedBehaviour="IGNORE"
+    return 0
+}
+
+function run () {
+    hasMoreArgs $#
+    # test $EUID -eq 0 || error "This script must be run as root"
+    inputPassword s "[sudo] password for $USER: "
+
+    echo "$s" | sudo -S echo > /dev/null || error "Wrong password"
+
+    $@
+    echo "$s" | sudo -S pm-suspend
+}
+
+source "$SCRIPTS_HELPERS/scriptStarter"

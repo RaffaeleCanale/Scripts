@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+function printHelp() {
+cat << EOF
+EOF
+}
+
+function declareConstants() {
+    $1 BASHRC_FILE "./user/.bashrc_template"
+    $1 BASHRC_PATHS "./builtin/data/bashrc_paths"
+}
+
+function loadOptions() {
+    return 0
+}
+
+function run() {
+    set +o nounset
+
+    test -f "$BASHRC_FILE" || error "$BASHRC_FILE file not found"
+    test -f "$BASHRC_PATHS" || error "$BASHRC_PATHS file not found"
+
+
+    mv "$HOME/.bashrc" "$HOME/.bashrc.original"
+
+    cat "$BASHRC_FILE" "$BASHRC_PATHS" | sedeasy "__PATH__" "$PWD" > "$HOME/.bashrc"
+
+    # source "$BASHRC_PATHS"
+}
+
+source "./builtin/helpers/scriptStarter"

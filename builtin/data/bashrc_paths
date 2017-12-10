@@ -1,0 +1,16 @@
+
+########## PATHS ##########
+
+export SCRIPTS="__PATH__/scripts.c"
+export SCRIPTS_HELPERS="__PATH__/builtin/helpers"
+export SCRIPTS_DATA="__PATH__/user"
+export PATH="$PATH:$SCRIPTS/path"
+
+
+########## BASH COMPLETION ##########
+
+if [ -d "${SCRIPTS}/completion" ]; then
+    for comp in "${SCRIPTS}/completion/"*; do
+        . "$comp"
+    done
+fi

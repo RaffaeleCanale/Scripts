@@ -19,112 +19,59 @@ function declareConstants() {
 
 function loadOptions() {
     # unusedBehaviour="IGNORE"
+    getOpt "-j|--jsync" useJsync
     return 0
 }
 
-function sedeasy {
-  sed "s/$(echo $1 | sed -e 's/\([[\/.*]\|\]\)/\\&/g')/$(echo $2 | sed -e 's/[\/&]/\\&/g')/g" $3
-}
-
-function exportBashrc() {
-    # TODO Allow to keep user .bashrc and only add core scripts
-    bashrcFile="./lib/.bashrc_template"
-
-    test -f "$bashrcFile" || error "$bashrcFile file not found"
-
-    mv "$HOME/.bashrc" "$HOME/.bashrc.original"
-
-    sedeasy "__PATH__" "$PWD" $bashrcFile > "$HOME/.bashrc"
-
-    source $HOME/.bashrc
-}
-
-function compileScripts() {
+function compile() {
     local src="$1"
     local dst="$2"
-    local applyProperties="./path/applyProperties" # Uncompiled version
 
+    test -d "$dst" || mkdir "$dst" || error
 
-    test -d "$dst" || mkdir "$dst" || error "Failed to create $dst"
-
-    for script in "$src/"*; do
-        if [[ "$script" != *.md ]]; then
-            compiled="$dst/$(basename "$script")"
-
-            cat "$script" | $applyProperties "$CONFIG_FILE" > "$compiled"
-            chmod +x "$compiled"
-        fi
-    done
-}
-
-function installNpmModules() {
-    # TODO Get rid of this eventually
-    for module in "./lib/modules/"*; do
-        pushd $module > /dev/null
-
-        chmod +x *
-
-        if [ -f "package.json" ]; then
-            npm install
-        fi
-
-        popd > /dev/null
-    done
-}
-
-function runSetupScripts() {
-    local path="./lib/setup.c"
-
-    if [ -d "$path" ]; then
-        for script in "$path/"*; do
-            if [[ "$script" != *.md ]]; then
-                . "$script"
+    for file in "$src/"*; do
+        local fileC="$dst/$(basename "$file")"
+        if [ -d "$file" ]; then
+            if [ "$(basename $file)" != "node_modules" ]; then
+                compile "$file" "$fileC"
+            else
+                cp -r "$file" "$fileC"
             fi
-        done
-    fi
-}
-
-function setupJsync() {
-    if [ ! -d ".jsync" ]; then
-        input gdrive_dir "Name of the Google Drive directory: " true
-
-        # TODO Add multi command to jsync
-        # TODO Add whitelist/blacklist to init
-        java -jar "./lib/JSync.jar" init
-        java -jar "./lib/JSync.jar" remote gdrive "$gdrive_dir"
-        java -jar "./lib/JSync.jar" copy-filters
-    fi
+        else
+            verboseR "$file"
+            ./builtin/helpers/compiler "$file" "$fileC" "$CONFIG_FILE"
+        fi
+    done
 }
 
 function run() {
+    verbose=true
     set +o nounset
 
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echoYellow "Config file $CONFIG_FILE not found"
-        if inputYesNo "Use JSync to import settings from Google Drive?"; then
-            setupJsync || error
-        else
-            error "Config file $CONFIG_FILE not found"
+    export SCRIPTS="$PWD/scripts.c"
+    export SCRIPTS_HELPERS="$PWD/builtin/helpers"
+
+    if $useJsync; then
+        ./scripts/setup/setup_jsync
+
+        if [ -d ".jsync" ]; then
+            java -jar "./builtin/bin/JSync.jar" sync
         fi
     fi
 
-    if [ -d ".jsync" ]; then
-        java -jar "./lib/JSync.jar" sync
-    fi
 
-    test -f "$CONFIG_FILE" || error
 
+    test -f "$CONFIG_FILE" || error "Config file $CONFIG_FILE not found"
+    # ./scripts/setup/copy_bashrc
+
+    SCRIPTS_HELPERS="$SCRIPTS_HELPERS" compile ./scripts ./scripts.c
+
+    ./scripts.c/setup/copy_bashrc -v
+    ./scripts.c/setup/atom_settings -v
+    ./scripts.c/setup/install_projects -v
     # TODO Add logging system
-    exportBashrc
-    compileScripts "./lib/setup" "./lib/setup.c"
-    compileScripts "./path" "./path.c"
-    if [ -d "./user/user_path" ]; then
-        compileScripts "./user/user_path" "./path.c"
-    fi
-    installNpmModules
-    runSetupScripts
+
 }
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"
-
-source "./lib/scriptStarter"
+source "./builtin/helpers/scriptStarter"

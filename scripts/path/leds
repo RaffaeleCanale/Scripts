@@ -1,0 +1,115 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Turn on/off or blink various leds
+
+    `echoGreen Usage:` ${PROGNAME} `echoBlue "[ACTION] [TARGET]"` `echoViolet [OPTIONS]`
+
+        `echoBlue ACTION`
+            `echoBlue on`    : Turn the target led on
+            `echoBlue off`   : Turn the target led off
+            `echoBlue blink` : Blink the led. Use `echoViolet -n` to determine how many times.
+                    Takes environment variable BLINK_SLEEP to determine the speed of the blink.
+            `echoBlue list`  : List all targets
+            `echoBlue chown` : Change the owner of the related configuration files to allow using the
+                    other functions without sudo
+
+        `echoBlue TARGET`: One of [${!LIGHTS[@]}]
+EOF
+}
+
+function declareConstants() {
+    $1 BLINK_SLEEP 0.5
+
+    declare -g -A LIGHTS
+    LIGHTS[kbd]="/sys/class/leds/tpacpi::kbd_backlight/brightness"
+    LIGHTS[standby]="/sys/class/leds/tpacpi::standby/brightness"
+    LIGHTS[power]="/sys/class/leds/tpacpi::power/brightness"
+    LIGHTS[capslock]="/sys/class/leds/input3::capslock/brightness"
+    LIGHTS[scrolllock]="/sys/class/leds/input3::scrolllock/brightness"
+    LIGHTS[numlock]="/sys/class/leds/input3::numlock/brightness"
+}
+
+
+function loadOptions() {
+    # unusedBehaviour="IGNORE"
+    getOpt "-n" count 1 1
+}
+
+function turnOn() {
+    local value=1
+    if [ target == "kbd" ]; then
+        value=2
+    fi
+
+    echo $value | tee "$target_path" &>/dev/null
+}
+
+function turnOff() {
+    echo 0 | tee "$target_path" &>/dev/null
+}
+
+function blink() {
+    for (( i = 0; i < count; i++ )); do
+        turnOn
+        sleep $BLINK_SLEEP
+        turnOff
+        sleep $BLINK_SLEEP
+    done
+}
+
+function list() {
+    for i in "${!LIGHTS[@]}"; do
+        echo "$i"
+    done
+}
+
+function chownFiles() {
+    for i in "${!LIGHTS[@]}"; do
+        sudo chown $USER "${LIGHTS[$i]}"
+    done
+}
+
+function checkFileOwner() {
+  local uname2="$(stat --format '%U' "$target_path")"
+  if [ "x${uname2}" != "x${USER}" ]; then
+    error "You do not have permission to access that config file\nUse 'sudo' or change file owner with 'leds chown'"
+  fi
+}
+
+function run () {
+    hasMoreArgs $#
+
+    action=$1
+    target=kbd
+
+    if [ $# -gt 1 ]; then
+        target=$2
+    fi
+
+    test ${LIGHTS[$target]+_} || error "Target does not exist"
+    target_path=${LIGHTS[$target]}
+
+    if [ $action == "chown" ]; then
+        chownFiles
+    elif [ $action == "list" ]; then
+        list
+    elif [ $action == "on" ]; then
+        checkFileOwner
+        turnOn
+    elif [ $action == "off" ]; then
+        checkFileOwner
+        turnOff
+    elif [ $action == "blink" ]; then
+        checkFileOwner
+        blink
+    else
+        error "Invalid action: $action"
+    fi
+
+    return 0
+}
+
+source "$SCRIPTS_HELPERS/scriptStarter"

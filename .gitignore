@@ -1,9 +1,6 @@
 node_modules
 .directory
 
-launchers
-path.c/
-lib/setup.c/
 progress/
 archived/
 
@@ -20,6 +17,6 @@ user/user_completion/*
 
 *.pyc
 
-!lib/modules/install_modules/launchers
 .jsync
-lib/bin
+
+scripts.c

@@ -1,0 +1,28 @@
+# #!/usr/bin/env bash
+# function printHelp() {
+# cat << EOF
+# EOF
+# }
+#
+# function declareConstants() {
+#     $1 BASHRC_FILE "./user/.bashrc_template"
+#     $1 BASHRC_PATHS "./builtin/data/bashrc_paths"
+# }
+#
+# function loadOptions() {
+#     return 0
+# }
+#
+# function run() {
+#     if [ ! -d ".jsync" ]; then
+#         input gdrive_dir "Name of the Google Drive directory: " true
+#
+#         # TODO Add multi command to jsync
+#         # TODO Add whitelist/blacklist to init
+#         java -jar "./builtin/bin/JSync.jar" init
+#         java -jar "./builtin/bin/JSync.jar" remote gdrive "$gdrive_dir"
+#         java -jar "./builtin/bin/JSync.jar" copy-filters
+#     fi
+# }
+#
+# source "./builtin/helpers/scriptStarter"

@@ -1,0 +1,100 @@
+#!/bin/bash
+
+function printHelp() {
+    cat << EOF
+
+    Search a LastPass password from the given encrypted backup.
+
+    `echoGreen Usage:` ${PROGNAME} `echoBlue [query]` `echoViolet "--stdout" "--raw"`
+
+        `echoBlue query`: Name of the LastPass entry to search
+
+        `echoViolet "--stdout"`: Print the password to stdout
+        `echoViolet "--raw"`   : Output the JSON entries instead of just the password
+
+    `echoGreen "Other usage:"` ${PROGNAME} `echoBlue --init`
+        Initialize the Lastpass backup file
+
+    `echoGreen "Other usage:"` ${PROGNAME} `echoBlue --update`
+        Update the Lastpass backup file
+EOF
+}
+
+function declareConstants() {
+    $1 LASTPASS_FILE "__LASTPASS__.__BACKUP_FILE___"
+    $1 CSV_QUERY_MODULE "$SCRIPTS/modules/csv_modules/query_csv"
+}
+
+function loadOptions() {
+	unusedBehaviour="IGNORE"
+    getOpt "--update" update
+    getOpt "--init" init
+    getOpt "--stdout" useStdout
+    getOpt "--raw" useRaw
+	return 0
+}
+
+function init() {
+    test ! -f "$LASTPASS_FILE" || error "Lastpass file already exists"
+
+    createTmpFile tmpFile
+    echo "Paste exported Lastpass.csv here" > "$tmpFile"
+
+    crypt encrypt "$tmpFile" --output "$LASTPASS_FILE"
+
+    update
+}
+
+function update() {
+    crypt edit "$LASTPASS_FILE"
+}
+
+function query() {
+    hasMoreArgs $#
+
+    test -f "$LASTPASS_FILE" || error "Lastpass file not found"
+
+    local result=`crypt decrypt --stdout "$LASTPASS_FILE" | node "$CSV_QUERY_MODULE" --stdin --query "$@"`
+
+    if $useRaw; then
+        if $useStdout; then
+            echo "$result" | jq '.'
+        else
+            echo "$result" | jq '.' | xargs echo -n | xclip -sel clip
+        fi
+
+        return
+    fi
+
+    IFS=$'\n' names=(`jq -r '.[].name' <<< "$result"`)
+    IFS=$'\n' passwords=(`jq -r '.[].password' <<< "$result"`)
+
+    if [ "${#names[@]}" -eq 0 ]; then
+        error "No result found for this query"
+    elif [ "${#names[@]}" -gt 1 ]; then
+        echoYellow "Multiple results found for this query:"
+        for name in "${names[@]}"; do
+            echo "  - $name"
+        done
+        exit 1
+    else
+        if $useStdout; then
+            echo "$passwords"
+        else
+            echo "Copied password for $names"
+            echo "$passwords" | xargs echo -n | xclip -sel clip
+        fi
+    fi
+}
+
+function run () {
+    if $init; then
+        init
+    elif $update; then
+        update
+    else
+        query "$@"
+    fi
+}
+
+source "$SCRIPTS_HELPERS/scriptStarter"

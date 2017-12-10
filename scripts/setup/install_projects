@@ -1,0 +1,50 @@
+#!/bin/bash
+# TODO Add custom build.sh script
+# TODO Add bash_completion file
+
+function printHelp() {
+    cat << EOF
+
+    Install personal projects
+
+    `echoGreen Usage:` ${PROGNAME}
+EOF
+}
+
+function declareConstants() {
+    $1 PROJECTS "$SCRIPTS_DATA/projects"
+    $1 PROJECTS_DIRECTORY "__SETUP__.__PROJECTS_DIRECTORY__"
+    $1 DRIVE_SYNC_DIRECTORY "__SETUP__.__DRIVE_SYNC_DIRECTORY__"
+    return 0
+}
+
+
+function loadOptions() {
+    # unusedBehaviour="IGNORE"
+    return 0
+}
+
+function installProjects() {
+    local installer="$SCRIPTS/setup/install_helpers/install_repo"
+
+    safeMkdir "$PROJECTS_DIRECTORY"
+    pushd "$PROJECTS_DIRECTORY" > /dev/null
+
+    for url in "${GIT_PROJECTS[@]}"; do
+        verboseR "$url"
+        $installer "$url" "$PROJECTS_DIRECTORY"
+    done
+
+    popd > /dev/null
+}
+
+function run () {
+    if [ -f "$PROJECTS" ]; then
+        source "$PROJECTS"
+        installProjects
+    else
+        echoYellow "Projects file not found"
+    fi
+}
+
+source "$SCRIPTS_HELPERS/scriptStarter"

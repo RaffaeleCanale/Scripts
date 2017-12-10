@@ -26,7 +26,7 @@ function loadOptions() {
 }
 
 function run () {
-
+    return 0
 }
 
-source "$SCRIPT_LIB/scriptStarter"
+source "$SCRIPTS_HELPERS/scriptStarter"

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+function printHelp() {
+    cat << EOF
+EOF
+}
+
+function declareConstants() {
+    return 0
+}
+
+
+function loadOptions() {
+    # unusedBehaviour="IGNORE"
+    return 0
+}
+
+function projectName() {
+    echo "$1" | sed -n -e 's/^.*\/\([^.]*\)\(.git\)*/\1/p'
+}
+
+function run () {
+    hasMoreArgs $# 2
+
+    GIT_URL="$1"
+    DESTINATION="$2"
+    PROJECT_NAME="$(projectName "$GIT_URL")"
+
+    if [ -d "$DESTINATION/$PROJECT_NAME" ]; then
+        pushd "$DESTINATION/$PROJECT_NAME" > /dev/null
+        # git pull
+    else
+        git clone "$GIT_URL" "$DESTINATION/$PROJECT_NAME"
+        pushd "$DESTINATION/$PROJECT_NAME" > /dev/null
+    fi
+
+    if [ -d ".jsync" ]; then
+        jsync sync
+    fi
+
+    for installer in "$SCRIPTS/setup/install_helpers/installers/"*; do
+        if $installer isCompatible; then
+            PROJECT_NAME="$PROJECT_NAME" $installer install || error "Failed to compile project"
+            PROJECT_NAME="$PROJECT_NAME" $installer copyToBin || error
+            PROJECT_NAME="$PROJECT_NAME" $installer createLauncher || error
+
+            exit 0
+        fi
+    done
+
+    error "Unrecognised project type: $PWD"
+}
+
+source "$SCRIPTS_HELPERS/scriptStarter"
