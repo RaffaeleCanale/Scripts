@@ -65,7 +65,11 @@ function run() {
     # ./scripts/setup/copy_bashrc
 
     SCRIPTS_HELPERS="$SCRIPTS_HELPERS" compile ./scripts ./scripts.c
+    if [ -d './user_scripts' ]; then
+        SCRIPTS_HELPERS="$SCRIPTS_HELPERS" compile ./user_scripts ./scripts.c
+    fi
 
+    # TODO Loop over setups
     ./scripts.c/setup/copy_bashrc -v
     ./scripts.c/setup/atom_settings -v
     ./scripts.c/setup/install_projects -v
